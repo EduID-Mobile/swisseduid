@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="auth/eduid/db" VERSION="20160418" COMMENT="XMLDB file for Moodle auth/eduid"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="auth_eduid_tokens" COMMENT="Swiss edu-ID Tokens table">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The user identificator"/>
+        <FIELD NAME="token" TYPE="char" LENGTH="40" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Token"/>
+        <FIELD NAME="expirationdate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The token expiration date"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

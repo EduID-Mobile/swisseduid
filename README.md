@@ -2,7 +2,9 @@ eduidauth: manual authentication plugin for Swiss edu-ID authentication
 =========================================================================
 
 This is a [Moodle](http://moodle.org) authentication plugin aimed at mobile 
-applications. It is compatible with the Moodle 2.x branch.
+applications compatible with the Swiss edu-ID authentication.
+
+This is just a draft and it not possible to use in production yet.
 
 Installation
 ------------
@@ -24,39 +26,8 @@ Settings-Plugins-Authentication-Manage Authentication named "edu-ID auth".
 
 Usage
 -----
+Use the get_service_access.php to generate a moodle access token.
+The accepted parameters are grant_type and authorization_code.
 
-The usage of this course should be a secure request structured as follows.
-
-https://yourmoodleinstallation.ch/auth/eduidauth/authenticate.php?username=myuser&password=mypassword
-
-If the user has been authenticated the response will be:
-{
-	"user": {
-		id: 3,
-		username: 'foo',
-		lastname: 'fooo',
-		....
-	},
-	"courses" {
-		"5":{
-			"name":"My first course",
-			"token":"caad14a34dc3582e1b0d9a83be6ae68b",
-			"startdate": date
-			....
-		},
-		"7":{
-		  ....
-		}
-	}
-}
-
-As you can see from the example for every course there one token as fields. 
-Every request creates the new tokens and deletes the old ones. 
-The duration of the tokens and the association with the webservice is set 
-in the plugin settings: 
-
-	Site Administration->Plugins->Authentication->Swiss edu-ID.
-
-You may develop your own webservices set or use/extend the uniappws. In any 
-case the correct functioning and the generation of the tokens requires a valid 
-webservice association.
+Use the get_app_token.php to generate the webservice token.
+The accepted parameters are access_token and service_shortname.

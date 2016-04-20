@@ -40,7 +40,7 @@ class auth_plugin_eduid extends auth_plugin_base {
      * @param array $page An object containing all the data for this page.
      */
     function config_form($config, $err, $user_fields) {
-        include "config.html";
+        include "config.php";
     }
 
     /**
@@ -52,22 +52,38 @@ class auth_plugin_eduid extends auth_plugin_base {
     function process_config($config) {
         global $CFG;
 		
-        if(empty($config->service_id)) {
-			set_config('', $config->service_id, 'auth/eduid');	
+        if(empty($config->eduid_user_info_endpoint)) {
+			set_config('', $config->eduid_user_info_endpoint, 'auth/eduid');
 		} else {
-			set_config('service_id', $config->service_id, 'auth/eduid');	
+			set_config('eduid_user_info_endpoint', $config->eduid_user_info_endpoint, 'auth/eduid');
 		}
 
-        if( isset($config->token_duration) and is_numeric($config->token_duration)) {
-			set_config('token_duration', $config->token_duration, 'auth/eduid');	
+        if( isset($config->service_token_duration) and is_numeric($config->service_token_duration)) {
+			set_config('service_token_duration', $config->service_token_duration, 'auth/eduid');
 		} else {
-			return false;	
+			return false;
+		}
+
+        if( isset($config->app_token_duration) and is_numeric($config->app_token_duration)) {
+			set_config('app_token_duration', $config->app_token_duration, 'auth/eduid');
+		} else {
+			return false;
 		}
 
 		return true;
     }
 
-	public function error($code) {
+	function create_user_session($userid) {
+		// check if the user is valid
+		$USER = $DB->get_record('user', array('username'=>$_POST['username']) );
+		if(empty($USER)) {
+			return $this->error(2);
+		} else {
+			return true;
+		}
+	}
+
+	function error($code) {
 		$error = array(
 				'exception' => 'unknown exception',
 				'message' => 'no message',
@@ -77,15 +93,27 @@ class auth_plugin_eduid extends auth_plugin_base {
 		switch ($code) {
 			case 0:
 				$error["exception"] = 'authentication_failed';
-				$error["message"] = 'Authentication failed. Please check your username and password.';
+				$error["message"] = 'Authentication failed. Authorization code not valid.';
 				break;
 			case 1:
-				$error["exception"] = 'user_data_exception';
-				$error["message"] = 'The username is missing.';
+				$error["exception"] = 'grant_type_exception';
+				$error["message"] = 'The grant_type is not valid!';
 				break;
 			case 2:
-				$error["exception"] = 'user_data_exception';
-				$error["message"] = 'The password is missing.';
+				$error["exception"] = 'code_exception';
+				$error["message"] = 'The code is not valid!';
+				break;
+			case 3:
+				$error["exception"] = 'access_token_exception';
+				$error["message"] = 'The access token is not valid!';
+				break;
+			case 4:
+				$error["exception"] = 'service_shortname_exception';
+				$error["message"] = 'The service shortname is not valid!';
+				break;
+			default:
+				$error["exception"] = 'unknown_error_exception';
+				$error["message"] = 'Unknown server error!';
 				break;
 		}
 		return $error;
