@@ -1,4 +1,4 @@
-eduidauth: manual authentication plugin for Swiss edu-ID authentication
+Moodle authentication plugin for Swiss edu-ID 
 =========================================================================
 
 This is a [Moodle](http://moodle.org) authentication plugin aimed at mobile 
@@ -13,7 +13,7 @@ To install please proceed as follows:
 
 1. Decompress the eduidauth archive and move the rename the folder to eduidauth.
 
-   You also can use this command: git clone git://github.com/arael/eduidauth.git eduidauth
+   You also can use this command: git clone git://github.com/arael/moodle_eduid.git eduid
 
 2. Move the folder to MOODLEROOT/auth
 
@@ -22,7 +22,7 @@ To install please proceed as follows:
 4. Click on Ok and finish the installation
 
 Once the installation is complete you should have a authentication plugin under
-Settings-Plugins-Authentication-Manage Authentication named "edu-ID auth".
+Settings-Plugins-Authentication-Manage Authentication named "Swiss edu-ID auth".
 
 Usage
 -----
