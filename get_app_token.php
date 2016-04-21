@@ -11,7 +11,6 @@ $headers = getallheaders();
 // return true if everything is ok otherwise returns the error code
 function params_valid() {
 	// parameters needed are access_token and service_shortname
-	global $DB;
 	$access_token_valid = isset($headers['Authorization']) and !empty($headers['Authorization']);
 	$service_shortname_valid = isset($_GET['service_shortname']) and !empty($_GET['service_shortname']);
 

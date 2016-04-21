@@ -6,26 +6,11 @@ require_once('lib.php');
 
 header('Content-type: application/json');
 $eduid_auth = get_auth_plugin('eduid');
+$headers = getallheaders();
 
-// return true if everything is ok otherwise returns the error code
-function params_valid() {
-	// parameters needed are grant_type and authorization_code
-	$grant_is_valid = isset($_GET['grant_type']) and !empty($_GET['grant_type']) and $_GET['grant_type'] == 'authorization_code';
-	$code_is_valid = isset($_GET['code']) and !empty($_GET['code']);
-	if( !$grant_is_valid ) {
-		return 1;
-	} else if( !$code_is_valid ) {
-		return 2;
-	} else {
-		return true;
-	}
-}
-
-// check the parameters
-$params_check = params_valid();
-
-if( $params_check === true ) {
-	$output = request( $eduid_auth->config->eduid_user_info_endpoint, array('grant' => $_GET['grant']), 'GET' );
+// The needed parameter is the code passed in the http header as Authorization.
+if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
+	$output = request( $eduid_auth->config->eduid_user_info_endpoint, array('grant' => $headers['Authorization']), 'GET' );
 	$user_info = json_decode($output);
 
 	// generate the service access token, very simple for now. Missing the device information.
@@ -60,6 +45,6 @@ if( $params_check === true ) {
 		'expires_in' => $eduid_auth->config->service_token_duration
 	));
 } else {
-	echo json_encode( $eduid_auth->error($params_check) );
+	echo json_encode( $eduid_auth->error(2) );
 }
 ?>
