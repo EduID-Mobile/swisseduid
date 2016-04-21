@@ -6,18 +6,19 @@ require_once('lib.php');
 
 header('Content-type: application/json');
 $eduid_auth = get_auth_plugin('eduid');
+$headers = getallheaders();
 
 // return true if everything is ok otherwise returns the error code
 function params_valid() {
 	// parameters needed are access_token and service_shortname
 	global $DB;
-	$access_token_valid = isset($_GET['access_token']) and !empty($_GET['access_token']);
-	$service_shortname = isset($_GET['service_shortname']) and !empty($_GET['service_shortname']);
+	$access_token_valid = isset($headers['Authorization']) and !empty($headers['Authorization']);
+	$service_shortname_valid = isset($_GET['service_shortname']) and !empty($_GET['service_shortname']);
 
 	// check the other parameters
-	if( !$access_token ) {
+	if( !$access_token_valid ) {
 		return 3;
-	} else if( !$service_shortname ) {
+	} else if( !$service_shortname_valid) {
 		return 4;
 	} else {
 		return true;
@@ -44,7 +45,7 @@ $params_check = params_valid();
 
 if( $params_check ) {
 	// check the service access token first
-	$service_access_record = $DB->get_record('auth_eduid_tokens', array('token' => $_GET['access_token']));
+	$service_access_record = $DB->get_record('auth_eduid_tokens', array('token' => $headers['Authorization']));
 
 	// check if the service shortname is in the externa_services table
 	$service = $DB->get_record('external_services', array('shortname' => $_GET['service_shortname']));

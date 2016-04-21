@@ -1,7 +1,7 @@
 <?php
 function request($url, $params, $method) {
 	// create curl resource
-    $ch = curl_init();
+	$ch = curl_init();
 
 	if($method == 'GET'){
 		// set url
@@ -13,14 +13,14 @@ function request($url, $params, $method) {
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 	}
 
-    //return the transfer as a string
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	//return the transfer as a string
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-    // $output contains the output string
-    $output = curl_exec($ch);
+	// $output contains the output string
+	$output = curl_exec($ch);
 
-    // close curl resource to free up system resources
-    curl_close($ch);
+	// close curl resource to free up system resources
+	curl_close($ch);
 
 	return $output;
 }
