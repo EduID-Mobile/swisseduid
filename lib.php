@@ -1,18 +1,11 @@
 <?php
-function request($url, $params, $method) {
+function request($url, $authorization) {
 	// create curl resource
 	$ch = curl_init();
 
-	if($method == 'GET'){
-		// set url
-		curl_setopt($ch, CURLOPT_URL, $url.'?'.http_build_query($params));
-	} else {
-		// set url
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
-	}
-
+	curl_setopt($ch, CURLOPT_URL, $url);
+	// set the headers
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array( "Authorization: $authorization"));
 	//return the transfer as a string
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 

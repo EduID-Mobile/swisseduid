@@ -10,7 +10,7 @@ $headers = getallheaders();
 
 // The needed parameter is the code passed in the http header as Authorization.
 if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
-	$output = request( $eduid_auth->config->eduid_user_info_endpoint, array('grant' => $headers['Authorization']), 'GET' );
+	$output = request( $eduid_auth->config->eduid_user_info_endpoint, $headers['Authorization'] );
 	$user_info = json_decode($output);
 
 	// generate the service access token, very simple for now. Missing the device information.
