@@ -22,6 +22,10 @@ if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 	// get the user data
 	$user = $DB->get_record('user', array('username' => $user_info->uniqueID), 'id' );
 
+	if(empty($user)) {
+		echo json_encode( $eduid_auth->error(5) ); return;
+	}
+
 	// check for a previous valid record
 	$previous_token_record = $DB->get_record('auth_eduid_tokens', array('userid' => $user->id));
 

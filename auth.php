@@ -111,6 +111,10 @@ class auth_plugin_eduid extends auth_plugin_base {
 				$error["exception"] = 'service_shortname_exception';
 				$error["message"] = 'The service shortname is not valid!';
 				break;
+			case 5:
+				$error["exception"] = 'unknown_user';
+				$error["message"] = 'The selected user has never accessed the website';
+				break;
 			default:
 				$error["exception"] = 'unknown_error_exception';
 				$error["message"] = 'Unknown server error!';

@@ -6,10 +6,12 @@ require_once('lib.php');
 
 header('Content-type: application/json');
 $eduid_auth = get_auth_plugin('eduid');
-$headers = getallheaders();
+$headers = null;
 
 // return true if everything is ok otherwise returns the error code
 function params_valid() {
+	global $headers;
+	$headers = getallheaders();
 	// parameters needed are access_token and service_shortname
 	$access_token_valid = isset($headers['Authorization']) and !empty($headers['Authorization']);
 	$service_shortname_valid = isset($_GET['service_shortname']) and !empty($_GET['service_shortname']);
