@@ -42,7 +42,7 @@ function get_valid_external_token($service, $userid, $context, $validuntil) {
 // check the parameters
 $params_check = params_valid();
 
-if( $params_check ) {
+if( $params_check === true ) {
 	// check the service access token first
 	$service_access_record = $DB->get_record('auth_eduid_tokens', array('token' => $headers['Authorization']));
 
