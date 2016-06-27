@@ -20,17 +20,25 @@ if(array_key_exists("PATH_INFO", $_SERVER)) {
     $serviceName = array_shift($pi);
 }
 
-$service;
 if (!empty($serviceName)) {
 
     $serviceName = trim($serviceName);
     $ts = explode("-", $serviceName);
     $serviceName = "EduID\\Service\\";
 
+    // create camel case classnames for dashed services
     $serviceName .= implode("", array_map(function($v) {return ucfirst(strtolower($v));}, $ts));
 
     if (class_exists($serviceName, true)) {
         $service = new $serviceName();
+        $service->setDebugMode(false);
+        
+        // eventually load moodle 
+        // note that we use Ajax script to supress moodle's WS services being launched
+        define('AJAX_SCRIPT', true);
+        require('config.php'); // lots of black magic is happening now
+        
+        // TODO check moodle's debug mode and reset service debugging
     }
     else {
         $service = new ErrorService(501 , "invalid service call to $serviceName");
@@ -41,6 +49,7 @@ if (!isset($service)) {
     $service = new ErrorService(403 , "no service set");
 }
 
+// NOW run the service
 $service->run();
 
 ?>
