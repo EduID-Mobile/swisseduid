@@ -1,36 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="auth/eduid/db" VERSION="20160627" COMMENT="XMLDB file for Moodle auth/eduid" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
 <TABLES>
-<TABLE NAME="auth_eduid_tokens" COMMENT="Swiss edu-ID Tokens table">
-<FIELDS>
-<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-<FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The user identificator"/>
-<FIELD NAME="authority_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="this typically holds the reference to the token authority"/>
-<FIELD NAME="parent_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="holds the references to the proxy token"/>
-<FIELD NAME="access_token" TYPE="char" LENGTH="40" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="a random string used to identify a token"/>
-<FIELD NAME="expirationdate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The token expiration date"/>
-<FIELD NAME="scope" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="basic scope of the token"/>
-<FIELD NAME="refresh_token" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-<FIELD NAME="algorithm" TYPE="char" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
-<FIELD NAME="sign_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="this is the key used for singing"/>
-<FIELD NAME="decrypt_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="holds a key for decrypting a token"/>
-<FIELD NAME="consumed" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Boolean value if the token has been consumed"/>
-</FIELDS>
-<KEYS>
-<KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-</KEYS>
-</TABLE>
-<TABLE NAME="auth_eduid_authorities" COMMENT="This table holds the keys and tokens for the registered authorities ">
-<FIELDS>
-<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-<FIELD NAME="authority_name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-<FIELD NAME="authority_shared_token" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-<FIELD NAME="privkey_for_authority" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="holds the formatted private key that moodle uses to work with that authority"/>
-<FIELD NAME="authority_public_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The public key that the authority uses for working with moodle"/>
-</FIELDS>
-<KEYS>
-<KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-</KEYS>
-</TABLE>
+    <TABLE NAME="auth_eduid_tokens" COMMENT="Swiss edu-ID Tokens table">
+        <FIELDS>
+            <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+            <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The user identificator"/>
+            <FIELD NAME="authority_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="this typically holds the reference to the token authority"/>
+            <FIELD NAME="parent_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="holds the references to the proxy token"/>
+            <FIELD NAME="access_token" TYPE="char" LENGTH="40" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="a random string used to identify a token"/>
+            <FIELD NAME="expirationdate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The token expiration date"/>
+            <FIELD NAME="scope" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="basic scope of the token"/>
+            <FIELD NAME="refresh_token" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+            <FIELD NAME="client" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+            <FIELD NAME="algorithm" TYPE="char" LENGTH="6" NOTNULL="false" SEQUENCE="false"/>
+            <FIELD NAME="sign_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="this is the key used for singing"/>
+            <FIELD NAME="decrypt_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="holds a key for decrypting a token"/>
+            <FIELD NAME="consumed" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Boolean value if the token has been consumed"/>
+        </FIELDS>
+        <KEYS>
+            <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        </KEYS>
+    </TABLE>
+    <TABLE NAME="auth_eduid_authorities" COMMENT="This table holds the keys and tokens for the registered authorities ">
+        <FIELDS>
+            <FIELD NAME="authority_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+            <FIELD NAME="authority_name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+            <FIELD NAME="authority_url"  TYPE="char" LENGTH="1024" NOTNULL="false" SEQUENCE="false"/>
+            <FIELD NAME="authority_shared_token" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+            <FIELD NAME="privkey_for_authority" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="holds the formatted private key that moodle uses to work with that authority"/>
+            <FIELD NAME="authority_public_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The public key that the authority uses for working with moodle"/>
+        </FIELDS>
+        <KEYS>
+            <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        </KEYS>
+    </TABLE>
 </TABLES>
 </XMLDB>
