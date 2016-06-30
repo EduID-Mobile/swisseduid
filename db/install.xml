@@ -5,10 +5,12 @@
         <FIELDS>
             <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
             <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The user identificator"/>
+            <FIELD NAME="token_type" TYPE="char" LENGTH="512" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Token Type"/>
             <FIELD NAME="authority_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="this typically holds the reference to the token authority"/>
             <FIELD NAME="parent_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="holds the references to the proxy token"/>
             <FIELD NAME="access_token" TYPE="char" LENGTH="40" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="a random string used to identify a token"/>
-            <FIELD NAME="expirationdate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The token expiration date"/>
+            <FIELD NAME="expiration" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The actual token expiration date"/>
+            <FIELD NAME="expires_in" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The time when the token expires from the time it has been issued"/>
             <FIELD NAME="scope" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="basic scope of the token"/>
             <FIELD NAME="refresh_token" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
             <FIELD NAME="client" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
@@ -31,7 +33,7 @@
             <FIELD NAME="authority_public_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The public key that the authority uses for working with moodle"/>
         </FIELDS>
         <KEYS>
-            <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            <KEY NAME="primary" TYPE="primary" FIELDS="authority_id"/>
         </KEYS>
     </TABLE>
 </TABLES>

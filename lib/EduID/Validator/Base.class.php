@@ -14,9 +14,6 @@ class Base extends \RESTling\Validator {
     protected $allowEmptyMethod = array();
     protected $requireEmptyMethod = array();
 
-    public function __construct($db) {
-        $this->db = $db;
-    }
 
     /**
      * allowEmpty() and requireEmtpy() are almost like RESTling\Validator::ignoreOperation
@@ -35,7 +32,7 @@ class Base extends \RESTling\Validator {
             }
         }
     }
-    
+
     public function requireEmpty($methodList) {
         if (!empty($methodList)) {
             if (!is_array($methodList)) {

@@ -4,50 +4,39 @@
  * *********************************************************************** */
 namespace EduID\Model;
 
-class Token extends DBManager{
+class Token extends ModelFoundation {
     protected $root_token;
     protected $token;
-    protected $token_list;
-    protected $active_token;
+    protected $validFields = ['id',
+                              'userid',
+                              'authority_id',
+                              'parent_id',
+                              'access_token',
+                              'expiration',
+                              'expires_in',
+                              'scope',
+                              'refresh_token',
+                              'client',
+                              'algorithm',
+                              'sign_key',
+                              'decrypt_key',
+                              'consumed',
+                              'token_type'
+                             ];
 
-    protected $root_token_type;   // service, client, user
-    protected $token_type = "Bearer";  // service, client, user
     protected $uuid;        // respective uuid
 
-    protected $mac_algorithm  = "HS256"; // use only JWA names
-    protected $expires_in     = 0;
-    protected $max_seq        = 0;
-    protected $use_sequence   = false;
-    protected $dbKeys;
+    protected $algorithm      = "HS256"; // use only JWA names
+    protected $expires_in     = 0; // default is unlimited
 
     protected $tokenLength;
-    
-    protected $db;
 
-    public function __construct($db, $options=array()) {
-        $this->db = $db;
-
-        $this->dbKeys = array(
-            "id"            => "INTEGER",
-            "access_token"  => "TEXT",
-            "refresh_token" => "TEXT",
-            "decrypt_key"   => "TEXT",
-            "sign_key"      => "TEXT",
-            "algorithm"     => "TEXT",
-            "userid"        => "INTEGER",
-            "authority_id"  => "INTEGER",
-            "parent_id"     => "INTEGER",
-            "scope"         => "TEXT",
-            "expirationdate"=> "INTEGER",
-            "consumed"      => "INTEGER",
-            "max_seq"       => "INTEGER",
-        );
-
+    public function __construct($options=array()) {
         // this should be set via the options
         $this->tokenLength = array(
-            "access_key" => 50,
-            "mac_key"    => 100,
-            "kid"        => 10
+            "access_token" => 40,
+            "refresh_token" => 40,
+            "sign_key"      => 100
         );
 
         $this->setOptions($options);
@@ -63,15 +52,15 @@ class Token extends DBManager{
             $aAlg = explode(" ",
                             "HS256 HS384 HS512 RS256 RS384 RS512 ES256 ES384 ES512 hmac-sha-256");
 
-            if (array_key_exists("mac_algorithm", $options) &&
-                in_array($options["mac_algorithm"], $aAlg)) {
+            if (array_key_exists("algorithm", $options) &&
+                in_array($options["algorithm"], $aAlg)) {
 
                 // if we get an old MAC name, transpose to the new JWA name
-                if ($options["mac_algorithm"] == "hmac-sha-256") {
+                if ($options["algorithm"] == "hmac-sha-256") {
 
-                    $options["mac_algorithm"] = "HS256";
+                    $options["algorithm"] = "HS256";
                 }
-                $this->mac_algorithm = $options["mac_algorithm"];
+                $this->algorithm = $options["algorithm"];
             }
             if (array_key_exists("alg", $options) &&
                 in_array($options["alg"], $aAlg)) {
@@ -80,20 +69,10 @@ class Token extends DBManager{
 
                     $options["alg"] = "HS256";
                 }
-                $this->mac_algorithm = $options["alg"];
+                $this->algorithm = $options["alg"];
             }
-
-            if (array_key_exists("use_sequence", $options)) {
-                $this->use_sequence = $options["use_ssequence"]; // evaluates as Boolean
-            }
-            if (array_key_exists("max_sequence", $options)) {
-                $this->max_seq = $options["max_sequence"];
-            }
-            if (array_key_exists("type", $options)) {
-                $this->token_type = $options["type"];
-            }
-            if (array_key_exists("token_type", $options)) {
-                $this->token_type = $options["token_type"];
+            if (array_key_exists("expires_in", $options)) {
+                $this->expires_in = $options["expires_in"];
             }
         }
     }
@@ -104,23 +83,15 @@ class Token extends DBManager{
      * initialises using a token (provided by the token validator)
      */
     public function setToken($token) {
-        $aValid = array("type");
-        foreach ($this->dbKeys as $k => $v) {
-            $aValid[] = $k;
-        }
-
         $bOK = true;
-        foreach (array_keys($token) as $tk) {
-            if (!in_array($tk, $aValid)) {
+        foreach (get_object_vars($token) as $tk) {
+            if (!in_array($tk, $this->validFields)) {
                 $bOK = false;
                 break;
             }
         }
 
         if ($bOK){
-            if (!array_key_exists('token_type', $token)) {
-                $token['token_type'] = $token["type"];
-            }
 
             $this->token = $token;
             $this->findRootToken();
@@ -136,11 +107,6 @@ class Token extends DBManager{
         if (!empty($token)) {
 
             $this->root_token = $token;
-            $this->root_token_type = $token["token_type"];
-            if (empty($this->token_type)) {
-
-                $this->token_type = $this->root_token_type;
-            }
          }
     }
 
@@ -152,45 +118,59 @@ class Token extends DBManager{
         return $this->root_token;
     }
 
+    public function getTokenResponse() {
+        $this->token->kid = $this->token->id;
+
+        return $this->reduceFields($this->token, ["access_token",
+                                                  "refresh_token",
+                                                  "expires_in",
+                                                  "scope",
+                                                  "kid",
+                                                  "sign_key",
+                                                  "algorithm",
+                                                  "token_type"
+                                                 ]);
+    }
+
     // create a new TM instance with the active token as root
-    public function getIssuer($type="") {
+    public function getIssuer() {
         $tm = null;
         if ($this->token) {
-            $tm = new Token($this->db, array("type" => $type));
+            $tm = new Token();
             $tm->setDebugMode($this->getDebugMode());
             $tm->setRootToken($this->token);
         }
         return $tm;
     }
 
-    public function getUser() {
-        if (!empty($this->token) &&
-            !empty($this->token["user_uuid"])) {
+    public function cloneIssuer() {
+        $tm = null;
 
-            $um = new User($this->db);
-            $um->setDebugMode($this->getDebugMode());
-            if ($um->findByUUID($this->token["user_uuid"])) {
-                return $um;
-            }
+        if ($this->root_token) {
+            $tm = new Token();
+            $tm->setDebugMode($this->getDebugMode());
+            $tm->setRootToken($this->root_token);
+        }
+
+        return $tm;
+    }
+
+    public function getUser() {
+        global $DB;
+
+        if (!empty($this->token) &&
+            !empty($this->token->userid)) {
+            return $DB->get_record('user', ['userid'=>$this->token->userid]);
         }
 
         return null;
     }
 
-    /**
-     * change the type for new tokens
-     */
-    public function setTokenType($type="Bearer") {
-        if (!empty($type)) {
-            $this->token_type = $type;
-        }
-    }
-
     public function checkTokenValue($key, $value) {
         if ($this->token &&
-            array_key_exists($key, $this->token) &&
-            !empty($this->token[$key]) &&
-            $this->token[$key] === $value) {
+            property_exists($this->token, $key) &&
+            !empty($this->token->$key) &&
+            $this->token->$key === $value) {
 
             return true;
         }
@@ -199,8 +179,8 @@ class Token extends DBManager{
 
     public function hasTokenValue($key) {
         if ($this->token &&
-            array_key_exists($key, $this->token) &&
-            (!empty($this->token[$key]) || $this->token[$key] > 0)) {
+            property_exists($this->token, $key) &&
+            (!empty($this->token->$key) || $this->token->$key > 0)) {
             return true;
         }
         return false;
@@ -218,19 +198,8 @@ class Token extends DBManager{
         return false;
     }
 
-    public function useSequence() {
-        $this->use_sequence = true;
-    }
-
-    public function setMaxSeq($maxseq) {
-        $this->use_sequence = true;
-        if (isset($maxseq) && $maxseq > 0) {
-            $this->max_seq = $maxseq;
-        }
-    }
-
     /**
-     * create a basic token
+     * create a basic token in memory instance
      *
      * @public function arrary newToken($type)
      *
@@ -244,29 +213,30 @@ class Token extends DBManager{
      * If token expiration is set, then this function also includes the
      * expiration timestamp;
      */
-    public function newToken($type="MAC", $fullToken=false) {
-        $newToken = array();
+    public function newToken() {
+        $newToken = new \stdClass();
 
-        $newToken["access_key"] = $this->randomString($this->tokenLength["access_key"]);
-        if ($type == "Bearer" && !$fullToken) {
-            $newToken["kid"] = $newToken["access_key"];
+        $newToken->consumed = 0;
+
+        $newToken->access_token  = $this->randomString($this->tokenLength["access_token"]);
+        $newToken->refresh_token = $this->randomString($this->tokenLength["refresh_token"]);
+        $newToken->sign_key      = $this->randomString($this->tokenLength["sign_key"]);
+
+        if ($this->root_token) {
+            $newToken->parent_id = $this->root_token->id;
+        }
+
+        if (!empty($this->algorithm)) {
+            $newToken->algorithm = $this->algorithm;
         }
         else {
-            $newToken["kid"] = $this->randomString($this->tokenLength["kid"]);
-
-            if (isset($this->mac_algorithm) &&
-                !empty($this->mac_algorithm)) {
-                $newToken["mac_algorithm"] = $this->mac_algorithm;
-            }
-
-            $newToken["mac_key"] = $this->randomString($this->tokenLength["mac_key"]);
+            $newToken->algorithm = "HS256"; // meaningful baseline
         }
 
         if (isset($this->expires_in) &&
             $this->expires_in > 0) {
 
-            $now = time();
-            $newToken["expires"] = $now + $this->expires_in;
+            $newToken->expiration = time() + $this->expires_in;
         }
 
         return $newToken;
@@ -275,120 +245,123 @@ class Token extends DBManager{
     /**
      * function addToken
      *
-     * initialise a token.
+     * initialise a token and stores it to the database
      *
      * this function sets external information such as the user_uuid etc.
      *
      * Allowed token values are
-     * * type | token_type
-     * * user_uuid
-     * * client_id
-     * * service_uuid
+     * * userid
+     * * client
+     * * authority_id
      * * scope
-     * * extra
-     * * mac_algorithm as a client can set a preference
+     * * algorithm as a client can set a preference
      *
      * At least one of user_uuid, service_uuid, or client_id MUST be set.
      */
-    public function addToken($token=array(), $fullToken=false) {
-        $type = $this->token_type;
-        if (array_key_exists("type", $token)) {
-            $type = $token["type"];
-        }
-        if (array_key_exists("token_type", $token)) {
-            $type = $token["token_type"];
-        }
+    public function addToken($token=array()) {
+        global $DB;
 
-        $newToken = $this->newToken($type, $fullToken);
+        $this->mark();
+        $newToken = $this->newToken();
 
         if (isset($this->root_token)) {
-            if (empty($type)) {
-                $type = $this->root_token_type;
-            }
-            $newToken["parent_kid"] = $this->root_token["kid"];
+            $newToken->parent_id = $this->root_token->id;
         }
 
-        if (!empty($type) &&
-            (
-                (array_key_exists("user_uuid", $token) && !empty($token["user_uuid"])) ||
-                (array_key_exists("service_uuid", $token) && !empty($token["service_uuid"])) ||
-                (array_key_exists("client_id", $token) && !empty($token["client_id"]))
-            )) {
+        if (
+            (array_key_exists("userid", $token) && !empty($token["userid"])) ||
+            (array_key_exists("authority_id", $token) && !empty($token["authority_id"])) ||
+            (array_key_exists("client", $token) && !empty($token["client"]))
+        ) {
 
-            $newToken["token_type"] = $type;
-            if (!$this->use_sequence) {
-                $newToken["seq_nr"] = 0;
-            }
-            else if (isset($this->max_seq) &&
-                     $this->max_seq > 0) {
-                $newToken["max_seq"] = $this->max_seq;
-            }
+            $this->mark();
 
-            foreach(array("user_uuid",
-                          "client_id",
-                          "service_uuid",
+            foreach(array("userid",
+                          "client",
+                          "authority_id",
                           "scope",
-                          "extra",
-                          "mac_algorithm") as $key) {
+                          "algorithm",
+                          "sign_key",
+                          "decrypt_key",
+                          "token_type",
+                          "scope") as $key) {
 
                 // inherit different approaches from the root token
                 if (!empty($this->root_token) &&
-                    array_key_exists($key, $this->root_token) &&
-                    !empty($this->root_token[$key])) {
-                    if ($key === "extra") {
-                        $newToken[$key] = json_encode($this->root_token[$key]);
-                    }
-                    else {
-                        $newToken[$key] = $this->root_token[$key];
-                    }
+                    property_exists($this->root_token,$key) &&
+                    !empty($this->root_token->$key)) {
+
+                    $newToken->$key = $this->root_token->$key;
                 }
 
                 if (array_key_exists($key, $token) &&
                     !empty($token[$key])) {
 
-                    if ($key === "extra") {
-                        $newToken[$key] = json_encode($token[$key]);
-                    }
-                    else {
-                        $newToken[$key] = $token[$key];
-                    }
+                    $newToken->$key = $token[$key];
                 }
             }
 
-            $newToken["issued_at"] = time();
+            $newToken->id = $DB->insert_record('auth_eduid_tokens', $newToken);
 
-            // store the data into the database
-            $aNames = array();
-            $aValues = array();
-            $aPH = array();
-            $aTypes = array();
+            $this->mark($newToken->id);
 
-            foreach ( $this->dbKeys as $k => $v) {
-                if (array_key_exists($k, $newToken)) {
-                    $aTypes[] = $v;
-                    $aNames[] = $k;
-                    $aValues[] = $newToken[$k];
-                    $aPH[] = '?';
-                }
+            if ($newToken->id) {
+                $this->token = $newToken;
             }
 
-            if (!empty($aNames)) {
-                $sqlstr = "INSERT INTO tokens (".implode(",", $aNames).") VALUES (".implode(",", $aPH).")";
-                $sth = $this->db->prepare($sqlstr, $aTypes);
-                $res = $sth->execute($aValues);
-                if(\PEAR::isError($res)){
-                    $this->log($res->getMessage() . " '" . $sqlstr . "' " . implode(", ", $aValues));
-                }
-                else {
-                    $this->token = $newToken;
-                    $this->token["extra"] = json_decode($this->token["extra"], true);
-                    if (isset($this->expires_in) &&
-                        $this->expires_in > 0) {
-                        $this->token["expires_in"] = $this->expires_in;
-                    }
-                }
-                $sth->free();
+            // add the token information into the external_token relation
+            $this->addMoodleToken();
+        }
+    }
 
+    private function addMoodleToken() {
+        // stolen from webservice/lib.php 308
+        global $DB;
+
+        $norestrictedservices = $DB->get_records('external_services',
+                                                 array('restrictedusers' => 0));
+        $serviceidlist = array();
+        foreach ($norestrictedservices as $service) {
+            $serviceidlist[] = $service->id;
+        }
+
+        $servicesusers = $DB->get_records('external_services_users',
+                                          array('userid' => $this->token->userid));
+
+        foreach ($servicesusers as $serviceuser) {
+            if (!in_array($serviceuser->externalserviceid, $serviceidlist)) {
+                 $serviceidlist[] = $serviceuser->externalserviceid;
+            }
+        }
+
+        // get all services which already have a token set for the current user
+        $usertokens = $DB->get_records('external_tokens',
+                                       array('userid' => $this->token->userid,
+                                             'tokentype' => EXTERNAL_TOKEN_PERMANENT));
+
+        $tokenizedservice = array();
+        foreach ($usertokens as $token) {
+                $tokenizedservice[]  = $token->externalserviceid;
+        }
+
+        // create a token for the service which have no token already
+        foreach ($serviceidlist as $serviceid) {
+            if (!in_array($serviceid, $tokenizedservice)) {
+                // create the token for this service
+                $newtoken = new \stdClass();
+                $newtoken->token              = md5(uniqid(rand(),1));
+                // check that the user has capability on this service
+                $newtoken->tokentype          = EXTERNAL_TOKEN_PERMANENT;
+                $newtoken->userid             = $this->token->userid;
+                $newtoken->externalserviceid  = $serviceid;
+                // TODO MDL-31190 find a way to get the context - UPDATE FOLLOWING LINE
+                $newtoken->contextid          = \context_system::instance()->id;
+                $newtoken->creatorid          = $this->token->userid;
+                $newtoken->timecreated        = time();
+
+                $newtoken->validuntil         = $this->token->expiration;
+
+                $DB->insert_record('external_tokens', $newtoken);
             }
         }
     }
@@ -399,250 +372,76 @@ class Token extends DBManager{
 
     public function consumeRootToken() {
         if (!empty($this->token)) {
-            $this->consume_token_db($this->token["parent_kid"]);
+            $this->consume_token_db($this->token);
         }
     }
 
     public function consumeToken() {
         if (!empty($this->token)) {
-            $this->consume_token_db($this->token["kid"]);
+            $this->consume_token_db($this->token);
         }
     }
 
-    // access number of loaded tokens
-    public function count() {
-        return count($this->token_list);
+    public function findTokenByKid($kid) {
+        global $DB;
+
+        $this->token = $DB->get_record('auth_eduid_tokens',
+                                       ['id'=>$kid]);
+        return ($this->token != null);
     }
 
-    public function next() {
-        if ($this->active_token >= 0 &&
-            $this->active_token < $this->count()) {
+    public function findToken($access_token, $active=true) {
+        global $DB;
 
-            if ($this->token) {
-                $this->active_token++;
-            }
-            if($this->active_token < $this->count()) {
-                $this->token = $this->token_list[$this->active_token];
-                return $this->getToken();
-            }
-        }
-        return null;
-    }
+        $this->token = $DB->get_record('auth_eduid_tokens',
+                                       ['access_token'=>$access_token]);
 
-    public function findTokens($options) {
-        $aDBFields  = array_keys($this->dbKeys);
-        $aTypes     = array();
-        $aValues    = array();
-        $condition  = array();
-
-        $this->token_list  = array();
-        $this->active_token = -1;
-        $this->token = null;
-
-        if (!empty($options)) {
-            foreach ($options as $f => $c) {
-                if (array_key_exists($f, $this->dbKeys)) {
-                    $aTypes[]    = $this->dbKeys[$f];
-                    $aValues[]   = $c;
-                    $condition[] = "$f = ?";
-                }
-            }
-         }
-
-        if (!empty($aTypes)) {
-            if (!array_key_exists("consumed", $options)) {
-                $aTypes[] = $this->dbKeys["consumed"];
-                $aValues[] = 0;
-                $condition[] = "consumed = ?";
-            }
-
-            $sqlstr = "select " . implode(", ", $aDBFields). " from tokens where " . implode(" AND ", $condition);
-
-            $sth = $this->db->prepare($sqlstr, $aTypes);
-            $res = $sth->execute($aValues);
-
-            if (\PEAR::isError($res)) {
-                $this->log($res->getMessage());
-            }
-            else {
-                while ($row = $res->fetchRow(MDB2_FETCHMODE_ASSOC)) {
-                    $token = array();
-                    foreach ($row as $key => $value) {
-                        if ($key === "extra") {
-                            $token[$key] = json_decode($value, true);
-                        }
-                        else {
-                            $token[$key] = $value;
-                        }
-                    }
-
-                    $this->token_list[] = $token;
-                }
-            }
-            $sth->free();
-
-            if (!empty($this->token_list)) {
-                $this->active_token = 0;
-            }
-        }
-        return $this->token_list;
-    }
-
-    public function findToken($token_id, $type="", $userUuid="", $active=true) {
-
-        $cond = array("kid"=> $token_id);
-        if (!empty($type)) {
-            $cond["token_type"] = $type;
-        }
-        if (!empty($userUuid)) {
-            $cond["user_uuid"] = $userUuid;
-        }
-        if (!$active) {
-            $cond["consumed"] = 1;
+        if (!$this->token) {
+             $this->token = $DB->get_record('auth_eduid_tokens',
+                                            ['refresh_token'=>$access_token]);
         }
 
-        $this->findTokens($cond);
+        if ($active && $this->token->consumed == 1) {
+            $this->token = null;
+        }
 
-        return ($this->count() > 0);
+        return ($this->token != null);
     }
 
     public function findRootToken() {
-        $aDBFields = array_keys($this->dbKeys);
+        global $DB;
 
         if (!empty($this->token) &&
-            array_key_exists("parent_kid", $this->token) &&
-            !empty($this->token["parent_kid"])) {
+            property_exists($this->token, "parent_id") &&
+            !empty($this->token->parent_id)) {
 
-            $sqlstr = "select ".implode(", ", $aDBFields)." from tokens where and token_id = ?";
-
-            $aTypes   = array("TEXT");
-            $aValues  = array($this->token["parent_kid"]);
-
-            $sth = $this->db->prepare($sqlstr, $aTypes);
-            $res = $sth->execute($aValues);
-
-            $this->root_token = null;
-            $this->root_token = array();
-
-            if ($row = $res->fetchRow(MDB2_FETCHMODE_ASSOC)) {
-
-                foreach ($row as $key => $value) {
-                    if ($key === "extra") {
-                        $this->root_token[$key] = json_decode($value, true);
-                    }
-                    else {
-                        $this->root_token[$key] = $value;
-                    }
-                }
-            }
-
-            $sth->free();
+            $this->root_token = $DB->get_record('auth_eduid_tokens',
+                                                ['id'=>$this->token->parent_id]);
         }
-    }
-
-    /**
-     * use this function if you need to add a different token information
-     */
-    public function prepareSubToken($type) {
-        if (!empty($type) &&
-            !empty($this->token)) {
-
-            $tm = new Token($this->db);
-            $tm->setDebugMode($this->getDebugMode());
-            
-            $tm->setRootToken($this->token);
-            $tm->setTokenType($type);
-
-            return $tm;
-        }
-        return null;
-    }
-
-    /**
-     * shortcut for Refresh Tokens
-     */
-    public function addSubToken($type) {
-        $tm = $this->prepareSubToken($type);
-        if ($tm) {
-            $tm->addToken(array());
-        }
-        return $tm;
     }
 
     public function eraseToken() {
+        global $DB;
+
         if (!empty($this->token)) {
-            $sqlstr = "DELETE FROM tokens WHERE kid = ?";
-            $sth = $this->db->prepare($sqlstr, array("TEXT"));
-            $res = $sth->execute(array($this->token["kid"]));
-            if (\PEAR::isError($res)) {
-                $this->log($res->getMessage());
-            }
-            $sth->free();
+            $DB->delete_records('auth_eduid_tokens', array('id' => $this->token->id));
         }
     }
 
-    private function consume_token_db($key) {
-        $sqlstr = "update tokens set consumed = ? where token_key = ?";
-        $sth = $this->db->prepare($sqlstr, array("INTEGER", "TEXT"));
+    private function consume_token_db($token) {
+        global $DB;
 
-        $now = time();
+        $token->consumed = 1;
+        $DB->set_field('auth_eduid_tokens', 'consumed', 1, ['id' => $this->token->id]);
+        $DB->set_field('auth_eduid_tokens', 'consumed', 1, ['parent_id' => $this->token->id]);
 
-        if (\PEAR::isError($sth)) {
-            $this->log($sth->getMessage() . " ". $sqlstr);
-        }
-        $res = $sth->execute(array($now,
-                                   $key));
-
-        if (\PEAR::isError($res))
-        {
-            $this->error = $res->getMessage();
-        }
-        $sth->free();
-
-        // consume all children
-        $sqlstr = "update table tokens set consumed = ? where token_parent = ? and token_type <> 'Refresh'";
-
-        $sth = $this->db->prepare($sqlstr, array("INTEGER", "TEXT"));
-        $res = $sth->execute(array($now,
-                                   $key));
-
-        if (\PEAR::isError($res))
-        {
-            $this->error = $res->getMessage();
-        }
-        $sth->free();
-    }
-
-    public function sequenceStep() {
-        if ($this->token && $this->use_sequence) {
-            $sqlstr = "update  tokens set seq_nr = ? where kid = ?";
-            $sth = $this->db->prepare($sqlstr, array("INTEGER", "TEXT"));
-
-            $res = $sth->execute(array($this->token["seq_nr"] + 1,
-                                       $this->token["kid"]));
-
-            if (\PEAR::isError($res))
-            {
-                $this->error = $res->getMessage();
-                $this->log($res->getMessage());
-            }
-            $sth->free();
-        }
-    }
-
-    public function updateAccess() {
-        $sqlstr = "update  tokens set last_access = ? where kid = ?";
-        $sth = $this->db->prepare($sqlstr, array("INTEGER", "TEXT"));
-
-        $res = $sth->execute(array(time(),
-                                   $this->token["kid"]));
-
-        if (\PEAR::isError($res))
-        {
-            $this->error = $res->getMessage();
-            $this->log($res->getMessage());
-        }
-        $sth->free();
+//        if ($subTokens = $DB->get_recordset('auth_eduid_tokens',
+//                                            ['parent_id' => $token->id])) {
+//
+//            foreach ($subTokens as $t) {
+//                $this->consume_token_db($t);
+//            }
+//        }
     }
 
     public function getSigner($alg="") {

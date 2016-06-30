@@ -7,8 +7,9 @@ namespace EduID;
 
 use EduID\ServiceFoundation;
 use EduID\Validator\Data\Token as TokenDataValidator;
-use EduID\Model\User;
-use EduID\Model\Service;
+use EduID\Model\User as UserModel;
+use EduID\Model\Authority as AuthorityModel;
+use EduID\Model\Token as TokenModel;
 
 //
 //require_once("Models/class.EduIDValidator.php");
@@ -30,139 +31,159 @@ class Token extends ServiceFoundation {
 
         $this->setOperationParameter("grant_type");
 
-        $this->tokenValidator->resetAcceptedTokens(array("Bearer", "MAC"));
+        $this->tokenValidator->resetAcceptedTokens(["Bearer"]);
+        $this->tokenValidator->ignoreOperations(["post_jwt_assertion"]);
 
-        $this->dataValidator = new TokenDataValidator($this->db);
+    //    $this->dataValidator = new TokenDataValidator();
 
-        $this->addDataValidator($this->dataValidator);
-    }
-
-    public function verifyRawToken($code) {
-        return $this->tokenValidator->verifyRawToken($code);
-    }
-
-    public function verifyTokenClaim($claim, $value) {
-        return $this->tokenValidator->verifyJWTClaim($claim, $value);
-    }
-
-    public function getAuthToken() {
-        return $this->tokenValidator->getToken();
-    }
-
-    public function getJWT() {
-        return $this->tokenValidator->getJWT();
-    }
-
-    public function getTargetService() {
-        if (!isset($this->serviceManager)) {
-            $this->serviceManager = new ServiceManager($this->db);
-        }
-        return $this->serviceManager;
+      //  $this->addDataValidator($this->dataValidator);
     }
 
     protected function prepareOperation() {
+        $this->mark();
         // this is a helper to set the assertion grant to something we can handle.
         // this small hack is needed make post_jwt_assertion() calls possible.
         $assertion_type = 'urn:ietf:param:oauth:grant-type:jwt-bearer';
-        $assertion_name = 'jwt_assertion';
 
         if ($this->inputData &&
             array_key_exists("grant_type", $this->inputData) &&
             $this->inputData["grant_type"] == $assertion_type) {
 
-            $this->inputData["grant_type"] = $assertion_name;
+            $this->inputData["grant_type"] = 'jwt_assertion';
         }
 
         parent::prepareOperation();
     }
 
     protected function post_password() { // OAuth2 Section 4.3.2
-        $token = $this->getAuthToken();
-        $tokenType = "MAC";
-        $tm = $this->tokenValidator->getTokenIssuer($tokenType);
-
-        $um = $this->dataValidator->getUser();
-        if ($um->authenticate($this->inputData["password"])) {
-
-            $tm->addToken(array("user_uuid" => $um->getUUID()));
-
-            $ut = $tm->getToken();
-
-            $this->data = array(
-                "access_token"  => $ut["access_key"],
-                "token_type"    => strtolower($ut["token_type"]),
-                "kid"           => $ut["kid"],
-                "mac_key"       => $ut["mac_key"],
-                "mac_algorithm" => $ut["mac_algorithm"]
-            );
-
-            if (array_key_exists("expires_in", $ut)) {
-                $this->data["expires_in"] = $ut["expires_in"];
-            }
-        }
-        else {
-            $this->log("failed to authenticate user " . $this->inputData["username"]);
-            $this->forbidden();
-        }
+        // MOODLE handles the password authorization separately.
+        return $this->forbidden();
     }
 
-    protected function post_client_credentials() {
-        $token = $this->getAuthToken();
-
-        // transpose token claims
-        $jwt = $this->getJWT();
-        $this->inputData["device_name"] = $jwt->getClaim("name");
-        $this->inputData["device_id"]   = $jwt->getClaim("sub");
-
-        $tokenType = "MAC";
-        $tm = $this->tokenValidator->getTokenIssuer($tokenType);
-
-        // get the root token info
-        $clientToken = $this->tokenValidator->getToken();
-
-        $token_extra = array("client_type" => $clientToken["client_id"],
-                             "device_name" => $this->inputData["device_name"]);
-
-        // get extra info from the current token
-        $tm->addToken(array("client_id" => $this->inputData["device_id"],
-                            "extra"     => $token_extra));
-
-        $token = $tm->getToken();
-
-        $this->data = array(
-            "access_token"  => $token["access_key"],
-            "token_type"    => strtolower($token["token_type"]),
-            "kid"           => $token["kid"],
-            "mac_key"       => $token["mac_key"],
-            "mac_algorithm" => $token["mac_algorithm"]
-        );
-
-        if (array_key_exists("expires_in", $token) && !empty($token["expires_in"])) {
-            $this->data["expires_in"] = $token["expires_in"];
-        }
+    protected function post_client_credentials() { // OAuth2 Section 4.4
+        return $this->forbidden();
     }
-
 
     protected function post_jwt_assertion() {
+        $this->mark();
+
         // RFC 7121 defines this as 'urn:ietf:param:oauth:grant-type:jwt-bearer'
 
+        // used by the EduID App to obtain its service grant token
+        $token = $this->inputData["assertion"];
+        $authority = new AuthorityModel(["expires_in" => 86000]);
+
+        if ($claims = $authority->verifyAssertion($token)) {
+            $this->mark(json_encode($claims));
+            $aud = $claims["aud"];
+            // the service MUST be the audience
+            $myurl = $this->targetAudience();
+
+            if ($aud == $myurl) {
+                // get claims
+                $um = new UserModel();
+                $u = new \stdClass();
+
+                $u->email     = $claims["email"]->getValue();
+                $u->firstname = $claims["given_name"]->getValue();
+                $u->lastname  = $claims["family_name"]->getValue();
+
+                $um->updateUserInfo($u);
+
+                if ($um->hasUser()) {
+                    $this->mark();
+                    $tm = new TokenModel();
+
+                    $client = $claims["iss"]->getValue();
+
+                    $this->mark();
+                    $tm->addToken(["token_type"   => "urn:eduid:token:client",
+                                   "client"       => $client,
+                                   "authority_id" => $authority->authorityId(),
+                                   "userid"       => $um->userId()]);
+
+                    $this->log( "assertion is ok" );
+                    $this->data = $tm->getTokenResponse();
+                }
+                else {
+                    $this->data = "NO USER SET";
+                }
+            }
+            else {
+                $this->forbidden();
+            }
+        }
+    }
+
+    protected function post_refresh() {
+        // RFC 6749 Section
+        // used by apps to extend their app token
+        $ftm   = new TokenModel();
+        $ftm->findtoken($this->inputData["refresh_token"], false);
+
+        $atoken = $this->tokenValidator->getToken();
+
+        $token = $ftm->getToken();
+
+        if ($token &&
+            $atoken &&
+            $token->id == $token->id) {
+
+            $ftm->findRootToken();
+
+            $tm = $ftm->cloneIssuer();
+
+            // create a new token using the same information as
+            // the old token
+            $tm->addToken([
+                "token_type" => "urn:eduid:token:app",
+                "client"     => $token->client
+            ]);
+
+            $this->data = $tm->getTokenResponse();
+
+            // invalidate the previous token
+            $ftm->consumeToken();
+        }
     }
 
     protected function post_authorization_code() { // RFC6749 Section 4.1
-        // service needs to be validated by tokendata validator
+        // used by the eudid app to obtain app tokens
 
-        // we don't allow code authorisation here (well, we are the authority)
-        $this->forbidden(json_encode(["error"=>"invalid_scope"]));
+        $token = $this->tokenValidator->getToken();
+
+        $client = $this->inputData["client_id"];
+
+        // the code is a JWT with the client as subject and that is signed
+        // using the same key as the authorization token.
+
+        $jwt = $this->tokenValidator->processJWT($this->inputData["code"]);
+        if ($jwt &&
+            $jwt->getClaim("aud") == $this->targetAudience() &&
+            $jwt->getClaim("iss") == $client)  {
+
+            $tm = $this->tokenValidator->getTokenIssuer();
+
+            $tm->addToken(["token_type" => "urn:eduid:token:app",
+                           "client"     => $client]);
+
+            $this->data = $tm->getTokenResponse();
+        }
+        else {
+            $this->forbidden(json_encode(["error"=>"invalid_scope"]));
+        }
     }
 
-    protected function post_validate() {
-        $t = $this->dataValidator->getToken();
+    private function findIssuer($issuer) {
+        global $DB;
+        return $DB->get_record('auth_eduid_authorities',
+                               ['authority_url'=>$issuer]);
+    }
 
-        $this->data["sub"]    = $t["client_id"];
-        $this->data["azp"]    = $t["extra"]["client_type"];
-        $this->data["iat"]    = $t["issued_at"];
-        $this->data["email"]  = $t["email"];
+    private function targetAudience() {
+        $myurl = ($_SERVER["HTTPS"] ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];
 
+        return $myurl;
     }
 }
 

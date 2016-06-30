@@ -71,6 +71,16 @@ class ModelFoundation extends \RESTling\Logger {
         return array_reduce($a, "\EduID\ModelFoundation::reduceBools");
     }
 
+    protected function reduceFields($object, $fieldList) {
+        $newObject = new \stdClass();
+        foreach ($fieldList as $property) {
+            if (property_exists($object, $property)) {
+                $newObject->$property = $object->$property;
+            }
+        }
+        return $newObject;
+    }
+
     protected function filterValidObjects($objList, $fields) {
         $f = function ($e) use ($fields) {
             return $this->checkMandatoryFields($e, $fields);
@@ -123,7 +133,7 @@ class ModelFoundation extends \RESTling\Logger {
         }
         return array();
     }
-    
+
     protected function mapToAttribute($objList, $attributeName, $quote=false) {
         $f = function ($e) use ($attributeName, $quote) {
             return $quote ? $this->db->quote($e[$attributeName]) : $e[$attributeName];

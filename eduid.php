@@ -31,12 +31,13 @@ if (!empty($serviceName)) {
 
     if (class_exists($serviceName, true)) {
         $service = new $serviceName();
-        $service->setDebugMode(false);
+        $service->setDebugMode(true);
 
         // eventually load moodle
         // note that we use Ajax script to supress moodle's WS services being launched
         define('AJAX_SCRIPT', true);
-        require('config.php'); // lots of black magic is happening now
+        // load moodle's main configuration and setup
+        require('../../config.php'); // lots of black magic is happening now
 
         // TODO check moodle's debug mode and reset service debugging
     }

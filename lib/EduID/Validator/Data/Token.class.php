@@ -30,7 +30,7 @@ class Token extends Validator {
         if (array_key_exists("grant_type", $this->data)) {
             switch ($this->data["grant_type"]) {
                 case "authorization_code": // Section 4.1.3
-                    $aFields = array("redirect_uri", "code", "client_id");
+                    $aFields = array("code", "client_id");
                     break;
                 case "password": // Section 4.3.2
                     $aFields = array("username", "password");
@@ -38,6 +38,9 @@ class Token extends Validator {
                 case "jwt_assertion":
                     // scope is optional
                     $aFields = array("assertion");
+                    break;
+                case "refresh_token":
+                    $aFields = array("refresh_token");
                     break;
                 case "client_credentials": // Section 4.4
                 default:
@@ -111,7 +114,7 @@ class Token extends Validator {
 
     protected function validate_post_password() {
         // ckeck if we know the requested user
-        $this->user = new UserModel($this->db);
+        $this->user = new UserModel();
         $this->user->setDebugMode($this->getDebugMode());
 
         if (!$this->user->findByMailAddress($this->data["username"])) {
@@ -135,7 +138,7 @@ class Token extends Validator {
             $this->log("target uri not found");
             return false;
         }
-        
+
         return true;
     }
 
