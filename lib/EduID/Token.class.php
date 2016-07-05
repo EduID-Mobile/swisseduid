@@ -160,7 +160,8 @@ class Token extends ServiceFoundation {
         $jwt = $this->tokenValidator->processJWT($this->inputData["code"]);
         if ($jwt &&
             $jwt->getClaim("aud") == $this->targetAudience() &&
-            $jwt->getClaim("iss") == $client)  {
+            $jwt->getClaim("sub") == $client &&
+            $jwt->getClaim("iss") == $token->client_id)  {
 
             $tm = $this->tokenValidator->getTokenIssuer();
 
