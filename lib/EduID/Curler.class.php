@@ -1,7 +1,8 @@
 <?php
 
 namespace EduID;
-use RESTling\Logger; 
+use RESTling\Logger;
+
 
 use Lcobucci\JWT as JWT;
 
@@ -11,6 +12,7 @@ class Curler extends Logger {
     private $host;
     private $base_url;
     private $path_info;
+    private $verifySSL = 1;
 
     private $param;
     private $body;
@@ -19,7 +21,7 @@ class Curler extends Logger {
     private $out_header;
     private $in_header;
     private $mac_token;
-    private $token_type = "mac";
+    private $token_type = "jwt";
     private $jwtClaims = array();
 
     private $next_url;
@@ -33,7 +35,7 @@ class Curler extends Logger {
         $this->param = array();
         $this->out_header = array();
     }
-    
+
     public function setUrl($options) {
         if (!empty($options)) {
             if (is_string($options)) {
@@ -45,7 +47,11 @@ class Curler extends Logger {
             $this->path_info  = array_key_exists("path_info", $options) ? $options["path_info"] : "";
         }
     }
-    
+
+    public function ignoreSSLCertificate() {
+        $this->verifySSL = 0;
+    }
+
     public function useMacToken() {
         $this->token_type = "mac";
     }
@@ -57,7 +63,7 @@ class Curler extends Logger {
             $this->jwtClaims = $claims;
         }
     }
-    
+
     public function setPath($path) {
         if (!empty($path) && is_string($path)) {
             $this->base_url = $path;
@@ -81,7 +87,7 @@ class Curler extends Logger {
     public function setHeader($p) {
         $this->out_header = $p;
     }
-    
+
     public function resetHeader() {
         $this->out_header = null;
     }
@@ -89,6 +95,7 @@ class Curler extends Logger {
     public function setToken($t) {
         $this->mac_token = $t;
     }
+
 
     private function prepareUri($data="") {
         $this->path_info = ltrim($this->path_info, "/");
@@ -136,7 +143,7 @@ class Curler extends Logger {
         }
 
         $authType = "prepare_auth_" . $this->token_type;
-        
+
         if (method_exists($this, $authType)) {
             $h = call_user_func(array($this,$authType));
             if (!empty($h)) {
@@ -149,7 +156,7 @@ class Curler extends Logger {
                 $th[] = $k . ": " . $v;
             }
         }
-        if (!empty($th)) {            
+        if (!empty($th)) {
             curl_setopt($this->curl, CURLOPT_HTTPHEADER, $th);
         }
     }
@@ -163,25 +170,27 @@ class Curler extends Logger {
             // sign mac token
             $signer = $this->getSigner($this->mac_token["mac_algorithm"]);
 
-            // generate payload
-            $ts = time();
+            if ($signer) {
+                // generate payload
+                $ts = time();
 
-            $payload = $this->next_method . " " . $oUri["path"];
-            if (array_key_exists("query", $oUri)) {
-                $payload .= "?". $oUri["query"];
+                $payload = $this->next_method . " " . $oUri["path"];
+                if (array_key_exists("query", $oUri)) {
+                    $payload .= "?". $oUri["query"];
+                }
+                $payload .= " HTTP/1.1\n";
+                $payload .= "$ts\n";
+                $payload .= $oUri["host"] . "\n";
+
+                $authHeader = array(
+                    "kid=" . $this->mac_token["kid"],
+                    "ts=$ts",
+                );
+
+                $authHeader[] = "mac=" . base64_encode($signer->sign($payload, $this->mac_token["mac_key"]));
+
+                $header = "Authorization: MAC " . implode(',', $authHeader);
             }
-            $payload .= " HTTP/1.1\n";
-            $payload .= "$ts\n";
-            $payload .= $oUri["host"] . "\n";
-
-            $authHeader = array(
-                "kid=" . $this->mac_token["kid"],
-                "ts=$ts",
-            );
-
-            $authHeader[] = "mac=" . base64_encode($signer->sign($payload, $this->mac_token["mac_key"]));
-
-            $header = "Authorization: MAC " . implode(',', $authHeader);
         }
 
         return $header;
@@ -191,6 +200,8 @@ class Curler extends Logger {
         $header = "";
         $this->mark();
         if (!empty($this->mac_token)) {
+            $this->log(json_encode($this->mac_token));
+
             $jwt = new JWT\Builder();
 
             $jwt->setIssuer($this->mac_token["client_id"]);
@@ -210,22 +221,22 @@ class Curler extends Logger {
                 }
             }
 
-
             $signer = $this->getSigner($this->mac_token["mac_algorithm"]);
+            if ($signer) {
+                $jwt->sign($signer,
+                           $this->mac_token["mac_key"]);
 
-            $jwt->sign($signer,
-                       $this->mac_token["mac_key"]);
+                $t = $jwt->getToken();
 
-            $t = $jwt->getToken();
-
-            $header = "Authorization: Bearer $t";
+                $header = "Authorization: Bearer $t";
+            }
         }
 
 
         return $header;
-        
+
         if (!empty($th)) {
-            
+
             curl_setopt($this->curl, CURLOPT_HTTPHEADER, $th);
         }
     }
@@ -264,28 +275,31 @@ class Curler extends Logger {
 
         return $qs;
     }
-    
+
     private function prepareRequest() {
         if ($this->curl) {
             curl_close($this->curl);
         }
-        
+
         $this->log($this->next_url);
         $c = curl_init($this->next_url);
-        
+
+        curl_setopt($c, CURLOPT_SSL_VERIFYHOST, $this->verifySSL ? 2 : 0);
+        curl_setopt($c, CURLOPT_SSL_VERIFYPEER, $this->verifySSL ? 1 : 0);
+
         curl_setopt($c, CURLOPT_VERBOSE, $this->getDebugMode());
 //        curl_setopt($c, CURLOPT_FORBID_REUSE, true);
 //        curl_setopt($c, CURLOPT_FRESH_CONNECT, true);
-        
+
         curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($c, CURLOPT_CUSTOMREQUEST, $this->next_method );
-        
+
         $this->curl = $c;
     }
 
     public function get($data="") {
         $this->next_method = "GET";
-        $this->prepareUri($data);    
+        $this->prepareUri($data);
         $this->prepareRequest();
 
         // curl_setopt($c, CURLOPT_HEADER, true);
@@ -296,7 +310,7 @@ class Curler extends Logger {
 
     public function post($data, $type) {
         $this->next_method = "POST";
-        $this->prepareUri();   
+        $this->prepareUri();
         $this->prepareRequest();
         $this->prepareOutHeader($type);
 
@@ -307,7 +321,7 @@ class Curler extends Logger {
 
     public function put($data, $type) {
         $this->next_method = "PUT";
-        $this->prepareUri();   
+        $this->prepareUri();
         $this->prepareRequest();
         $this->prepareOutHeader($type);
 

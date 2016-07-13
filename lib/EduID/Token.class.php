@@ -84,6 +84,7 @@ class Token extends ServiceFoundation {
                 $um = new UserModel();
                 $u = new \stdClass();
 
+                $u->username  = $claims["sub"]->getValue();
                 $u->email     = $claims["email"]->getValue();
                 $u->firstname = $claims["given_name"]->getValue();
                 $u->lastname  = $claims["family_name"]->getValue();
@@ -94,7 +95,7 @@ class Token extends ServiceFoundation {
                     $this->mark();
                     $tm = new TokenModel();
 
-                    $client = $claims["iss"]->getValue();
+                    $client = $claims["azp"]->getValue();
 
                     $this->mark();
                     $tm->addToken(["token_type"   => "urn:eduid:token:client",
@@ -157,11 +158,11 @@ class Token extends ServiceFoundation {
         // the code is a JWT with the client as subject and that is signed
         // using the same key as the authorization token.
 
-        $jwt = $this->tokenValidator->processJWT($this->inputData["code"]);
+        $jwt = $this->tokenValidator->processJWT($this->inputData["authorization_code"]);
         if ($jwt &&
             $jwt->getClaim("aud") == $this->targetAudience() &&
             $jwt->getClaim("sub") == $client &&
-            $jwt->getClaim("iss") == $token->client_id)  {
+            $jwt->getClaim("iss") == $token->client)  {
 
             $tm = $this->tokenValidator->getTokenIssuer();
 

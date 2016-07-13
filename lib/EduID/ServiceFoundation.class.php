@@ -18,7 +18,7 @@ class ServiceFoundation extends \RESTling\Service {
     public function __construct() {
         // init the service
         parent::__construct();
-        $this->setDebugMode(false);
+        $this->setDebugMode(true);
 
         // always strip the first path_info because the services are called via eduid.php
         array_shift($this->path_info);

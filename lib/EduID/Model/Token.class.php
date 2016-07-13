@@ -261,7 +261,6 @@ class Token extends ModelFoundation {
     public function addToken($token=array()) {
         global $DB;
 
-        $this->mark();
         $newToken = $this->newToken();
 
         if (isset($this->root_token)) {
@@ -273,8 +272,6 @@ class Token extends ModelFoundation {
             (array_key_exists("authority_id", $token) && !empty($token["authority_id"])) ||
             (array_key_exists("client", $token) && !empty($token["client"]))
         ) {
-
-            $this->mark();
 
             foreach(array("userid",
                           "client",
@@ -302,8 +299,6 @@ class Token extends ModelFoundation {
             }
 
             $newToken->id = $DB->insert_record('auth_eduid_tokens', $newToken);
-
-            $this->mark($newToken->id);
 
             if ($newToken->id) {
                 $this->token = $newToken;
@@ -449,7 +444,7 @@ class Token extends ModelFoundation {
 
         if (empty($alg)) {
             if ($this->token) {
-                $alg = $this->token["mac_algorithm"];
+                $alg = $this->token->algorithm;
             }
             else {
                 return null;
