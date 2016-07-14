@@ -321,6 +321,9 @@ class Token extends ModelFoundation {
         }
 
         // create a token for the service which have no token already
+        // MOODLE refuses to have the same token several times for the user.
+        // FIXME: the correct behaviour would be to request a token for a special service type.
+        // The reality is that Moodle's token handling would no allow this
         foreach ($serviceidlist as $serviceid) {
             // create the token for this service
             $newtoken = new \stdClass();
@@ -339,6 +342,7 @@ class Token extends ModelFoundation {
             $newtoken->validuntil         = $this->token->expiration ? $this->token->expiration : 0;
 
             $DB->insert_record('external_tokens', $newtoken);
+            break; // ensure that the same token is created only once. (hopefully for the correct service set)
         }
     }
 
