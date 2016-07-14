@@ -233,9 +233,7 @@ class Token extends ModelFoundation {
             $newToken->algorithm = "HS256"; // meaningful baseline
         }
 
-        if (isset($this->expires_in) &&
-            $this->expires_in > 0) {
-
+        if ($this->expires_in > 0) {
             $newToken->expiration = time() + $this->expires_in;
         }
 
@@ -305,7 +303,9 @@ class Token extends ModelFoundation {
             }
 
             // add the token information into the external_token relation
-            $this->addMoodleToken();
+            if ($newToken->token_type == "urn:eduid:token:app") {
+                $this->addMoodleToken();
+            }
         }
     }
 
@@ -320,44 +320,25 @@ class Token extends ModelFoundation {
             $serviceidlist[] = $service->id;
         }
 
-        $servicesusers = $DB->get_records('external_services_users',
-                                          array('userid' => $this->token->userid));
-
-        foreach ($servicesusers as $serviceuser) {
-            if (!in_array($serviceuser->externalserviceid, $serviceidlist)) {
-                 $serviceidlist[] = $serviceuser->externalserviceid;
-            }
-        }
-
-        // get all services which already have a token set for the current user
-        $usertokens = $DB->get_records('external_tokens',
-                                       array('userid' => $this->token->userid,
-                                             'tokentype' => EXTERNAL_TOKEN_PERMANENT));
-
-        $tokenizedservice = array();
-        foreach ($usertokens as $token) {
-                $tokenizedservice[]  = $token->externalserviceid;
-        }
-
         // create a token for the service which have no token already
         foreach ($serviceidlist as $serviceid) {
-            if (!in_array($serviceid, $tokenizedservice)) {
-                // create the token for this service
-                $newtoken = new \stdClass();
-                $newtoken->token              = md5(uniqid(rand(),1));
-                // check that the user has capability on this service
-                $newtoken->tokentype          = EXTERNAL_TOKEN_PERMANENT;
-                $newtoken->userid             = $this->token->userid;
-                $newtoken->externalserviceid  = $serviceid;
-                // TODO MDL-31190 find a way to get the context - UPDATE FOLLOWING LINE
-                $newtoken->contextid          = \context_system::instance()->id;
-                $newtoken->creatorid          = $this->token->userid;
-                $newtoken->timecreated        = time();
+            // create the token for this service
+            $newtoken = new \stdClass();
+            $newtoken->token              = $this->token->access_token;
+            // check that the user has capability on this service
+            $newtoken->tokentype          = EXTERNAL_TOKEN_PERMANENT;
+            $newtoken->userid             = $this->token->userid;
+            $newtoken->externalserviceid  = $serviceid;
+            // TODO MDL-31190 find a way to get the context - UPDATE FOLLOWING LINE
+            $newtoken->contextid          = \context_system::instance()->id;
 
-                $newtoken->validuntil         = $this->token->expiration;
+            $newtoken->creatorid          = $this->token->userid;
+            $newtoken->timecreated        = time();
+            $newtoken->lastaccess         = time();
 
-                $DB->insert_record('external_tokens', $newtoken);
-            }
+            $newtoken->validuntil         = $this->token->expiration ? $this->token->expiration : 0;
+
+            $DB->insert_record('external_tokens', $newtoken);
         }
     }
 
