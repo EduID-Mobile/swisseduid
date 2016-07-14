@@ -16,7 +16,7 @@ class User extends ModelFoundation {
     private $user;
 
     public function hasUser() {
-        return isset($this->user);
+        return (isset($this->user) && $this->user);
     }
 
     public function userId() {
@@ -25,22 +25,18 @@ class User extends ModelFoundation {
 
     public function updateUserInfo($user) {
         if ($this->findUser($user->email)) {
-            $this->mark(" + ");
+            $this->log(" update user from assertion ");
             $this->updateUser($user);
         }
         else {
-            $this->mark(" - ");
+            $this->log(" create user from assertion ");
             $this->createUser($user);
         }
     }
 
     private function findUser($usermail) {
         global $DB;
-        $this->log($usermail);
         $this->user = $DB->get_record('user', array('email' => $usermail));
-        if ($this->user) {
-            $this->mark();
-        }
 
         return $this->hasUser();
     }
@@ -50,8 +46,8 @@ class User extends ModelFoundation {
 
         $usernew = new \stdClass();
 
-        $usernew->auth      = "OAuth2";
-        $usernew->username  = $user->email;
+        $usernew->auth      = "eduid";
+        $usernew->username  = $user->username;
         $usernew->email     = $user->email;
         $usernew->firstname = $user->firstname;
         $usernew->lastname  = $user->lastname;
@@ -65,7 +61,6 @@ class User extends ModelFoundation {
         $usernew->mnethostid = $CFG->mnet_localhost_id; // Always local user.
         $usernew->password = AUTH_PASSWORD_NOT_CACHED;  // because the authority is elsewhere
 
-        $this->log("create user");
         $usernew->id = \user_create_user($usernew, false, false);
 
         if ($usernew->id > 0)
@@ -87,7 +82,7 @@ class User extends ModelFoundation {
             useredit_update_trackforums($usernew, $usernew);
 
             // Save custom profile fields data.
-            profile_save_data($usernew);
+            \profile_save_data($usernew);
 
             // Reload from db.
             $usernew = $DB->get_record('user', array('id' => $usernew->id));
@@ -102,13 +97,17 @@ class User extends ModelFoundation {
     }
 
     private function updateUser($user) {
-        foreach (get_object_vars($user) as $k => $v) {
+        if ($user) {
 
-            $this->user->$k = $user->$k;
+            foreach (get_object_vars($user) as $k => $v) {
+                $this->user->$k = $user->$k;
+            }
+
+            user_update_user($this->user, false, false);
         }
-
-        $this->log("update user");
-        user_update_user($this->user, false, false);
+        else {
+            $this->log("empty user object");
+        }
     }
 }
 

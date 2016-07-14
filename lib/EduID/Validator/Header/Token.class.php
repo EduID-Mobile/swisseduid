@@ -11,6 +11,7 @@ use EduID\Model\Token as TokenModel;
 use Lcobucci\JWT;
 use Lcobucci\JWT\Parser as TokenParser;
 
+// use OutOfBoundsException;
 
 class Token extends Validator {
 
@@ -163,6 +164,9 @@ class Token extends Validator {
     }
 
     protected function validate() {
+        $this->log($this->operation);
+        $this->log(implode(", ", $this->ignoreOps));
+
         if (empty($this->token_type)) {
 
             // nothin to validate
@@ -260,7 +264,9 @@ class Token extends Validator {
     }
 
     protected function validate_jwt() {
-        $alg = $this->jwt_token->getHeader("alg");
+
+        $tobj = [];
+        $alg = $this->jwt_token->getHeader("alg", $tobj);
 
         if (empty($alg)) {
             $this->log("reject unprotected jwt");
@@ -276,7 +282,7 @@ class Token extends Validator {
             return false;
         }
 
-        if (!$this->verifyToken($this->jwt_token)) {
+        if (!$this->verifyJWT($this->jwt_token)) {
 
             $this->log("requested signer '" . $this->jwt_token->getHeader("alg") . "'");
             return false;
@@ -290,7 +296,7 @@ class Token extends Validator {
         }
 
         // ignore sub, aud, and name for the time being.
-
+        $this->mark();
         return true;
     }
 
@@ -351,10 +357,10 @@ class Token extends Validator {
     }
 
     private function parseJWT($rawtoken) {
-        $jwt = new TokenParser();
+        $tp = new TokenParser();
 
         try {
-            $token = $jwt->parse($this->token);
+            $jwt = $tp->parse($this->token);
         }
         catch (InvalidArgumentException $e) {
             $this->log("invalid arguent: " . $e->getMessage());
@@ -387,7 +393,11 @@ class Token extends Validator {
         }
 
         $now= time();
-        if ($jtoken->getClaim("exp")->getvalue() < $now) {
+
+        if (!empty($jtoken->getClaim("exp", [])) &&
+            $jtoken->getClaim("exp")->getvalue() < $now) {
+
+            $this->log("the token has expired");
             return false;
         }
         return true;
