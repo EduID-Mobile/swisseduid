@@ -71,7 +71,9 @@ class Token extends ServiceFoundation {
 
         // used by the EduID App to obtain its service grant token
         $token = $this->inputData["assertion"];
-        $authority = new AuthorityModel(["expires_in" => 86000]);
+
+        // use system configuration!
+        $authority = new AuthorityModel();
 
         if ($claims = $authority->verifyAssertion($token)) {
             $this->mark(json_encode($claims));
@@ -92,7 +94,8 @@ class Token extends ServiceFoundation {
                 $um->updateUserInfo($u);
 
                 if ($um->hasUser()) {
-                    $this->mark();
+
+                    // use system configuration!
                     $tm = new TokenModel();
 
                     $client = $claims["azp"]->getValue();
@@ -119,7 +122,7 @@ class Token extends ServiceFoundation {
     protected function post_refresh() {
         // RFC 6749 Section
         // used by apps to extend their app token
-        $ftm   = new TokenModel();
+        $ftm   = new TokenModel(["expires_in" => 86000]);
         $ftm->findtoken($this->inputData["refresh_token"], false);
 
         $atoken = $this->tokenValidator->getToken();
@@ -165,6 +168,8 @@ class Token extends ServiceFoundation {
             $jwt->getClaim("iss") == $token->client)  {
 
             $tm = $this->tokenValidator->getTokenIssuer();
+
+            $tm->setOptions(["expires_in" => 86000]);
 
             $tm->addToken(["token_type" => "urn:eduid:token:app",
                            "client"     => $client]);
