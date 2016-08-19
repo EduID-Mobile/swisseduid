@@ -174,7 +174,17 @@ class Token extends ServiceFoundation {
             $tm->addToken(["token_type" => "urn:eduid:token:app",
                            "client"     => $client]);
 
-            $this->data = $tm->getTokenResponse();
+            $data = $tm->getTokenResponse();
+
+            $this->data = [];
+            $this->data["access_token"]  = $data->access_token;
+            $this->data["refresh_token"] = $data->refresh_token;
+            if (property_exists($data, "scope")) {
+                $this->data["scope"] = $data->scope;
+            }
+            if (property_exists($data, "expires_in")) {
+                $this->data["expires_in"] = $data->expires_in;
+            }
         }
         else {
             $this->forbidden(json_encode(["error"=>"invalid_scope"]));
