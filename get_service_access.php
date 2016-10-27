@@ -42,6 +42,7 @@ if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 		$record->access_token = $access_token;
 		$record->refresh_token = $refresh_token;
 		$record->expiration = time() + $eduid_auth->config->service_token_duration;
+		$record->expires_in = $eduid_auth->config->service_token_duration;
 		$DB->insert_record('auth_eduid_tokens', $record);
 	} elseif($previous_token_record->expiration < time()) {
 		$previous_token_record->access_token = $access_token;

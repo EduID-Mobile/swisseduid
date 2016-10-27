@@ -50,15 +50,13 @@ if( $params_check === true ) {
 	$service_access_record = $DB->get_record('auth_eduid_tokens', array('access_token' => $headers['Authorization']));
 	/* $service_access_record = $DB->get_record('auth_eduid_tokens', array('access_token' => 'f4bb00f0061360a9cf2359598a1e840f77242b5f')); */
 	if($service_access_record === false || $service_access_record->expiration < time()) {
-		echo json_encode( $eduid_auth->error(3) );
-		return;
+		echo json_encode( $eduid_auth->error(3) ); return;
 	}
 
 	// check if the service shortname is in the external_services table
 	$service = $DB->get_record('external_services', array('shortname' => $_GET['service_shortname']));
 	if($service === false) {
-		echo json_encode( $eduid_auth->error(4) );
-		return;
+		echo json_encode( $eduid_auth->error(4) ); return;
 	} else {
 		// get the system context
 		$context = context_system::instance();
