@@ -10,6 +10,7 @@ $headers = null;
 
 // return true if everything is ok otherwise returns the error code
 function params_valid() {
+	/* return true; */
 	global $headers;
 	$headers = getallheaders();
 	// parameters needed are access_token and service_shortname
@@ -46,9 +47,14 @@ $params_check = params_valid();
 
 if( $params_check === true ) {
 	// check the service access token first
-	$service_access_record = $DB->get_record('auth_eduid_tokens', array('token' => $headers['Authorization']));
+	$service_access_record = $DB->get_record('auth_eduid_tokens', array('access_token' => $headers['Authorization']));
+	/* $service_access_record = $DB->get_record('auth_eduid_tokens', array('access_token' => 'f4bb00f0061360a9cf2359598a1e840f77242b5f')); */
+	if($service_access_record === false || $service_access_record->expiration < time()) {
+		echo json_encode( $eduid_auth->error(3) );
+		return;
+	}
 
-	// check if the service shortname is in the externa_services table
+	// check if the service shortname is in the external_services table
 	$service = $DB->get_record('external_services', array('shortname' => $_GET['service_shortname']));
 	if($service === false) {
 		echo json_encode( $eduid_auth->error(4) );
@@ -56,22 +62,26 @@ if( $params_check === true ) {
 	} else {
 		// get the system context
 		$context = context_system::instance();
+		// get the moodle external token tied to the used service
+		$external_token_record = $DB->get_record('external_tokens', array('userid' => $service_access_record->userid, 'externalserviceid' => $service->id));
 		// initialize the token and expiration date
-		$token = $service->token;
-		$expiration_date = $service->validuntil;
-		// if the token is not valid then create a new one
-		if($service_access_record->expirationdate < time()) {
-			echo json_encode( $eduid_auth->error(3) );
-			return;
-		} else if($service->validuntil < time()) {
-			$expiration_date = time() + $eduid_auth->config->service_token_expiration_date;
-			// generate a new token
+		$token = '';
+		$expires_in = '';
+		// if the external token is valid return it. Otherwise generate a new one.
+		if($external_generate_token === false || $external_token_record->validuntil < time()) {
+			// let the external token have the same expiration date as the access_token
+			$expiration_date = $service_access_record->expiration;
+			/* $expiration_date = time() + $eduid_auth->config->service_token_expiration_date; */
 			$token = get_valid_external_token($service, $service_access_record->userid, $context, $expiration_date);
+			$expires_in = $expiration_date - time();
+		} else {
+			$token = $external_token_record->token;
+			$expires_in = $external_token_record->validuntil - time();
 		}
 		// output the token information
 		echo json_encode(array(
 			'token' => $token,
-			'expires_in' => time() - $service->validuntil
+			'expires_in' => $expires_in
 		));
 	}
 } else {
