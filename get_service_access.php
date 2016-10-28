@@ -34,7 +34,6 @@ if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 
 	// check for a previous valid record
 	$previous_token_record = $DB->get_record('auth_eduid_tokens', array('userid' => $user->id));
-
 	if($previous_token_record === false) {
 		// prepare the new record
 		$record = new stdClass();
@@ -44,17 +43,21 @@ if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 		$record->expiration = time() + $eduid_auth->config->service_token_duration;
 		$record->expires_in = $eduid_auth->config->service_token_duration;
 		$DB->insert_record('auth_eduid_tokens', $record);
+		$previous_token_record = $DB->get_record('auth_eduid_tokens', array('userid' => $user->id));
 	} elseif($previous_token_record->expiration < time()) {
 		$previous_token_record->access_token = $access_token;
 		$previous_token_record->expiration = time() + $eduid_auth->config->service_token_duration;
 		$DB->update_record('auth_eduid_tokens', $previous_token_record);
 	} else {
 		$access_token = $previous_token_record->access_token;
+		$refresh_token = $previous_token_record->refresh_token;
 	}
 	// give the service access token as output
 	echo json_encode(array(
-		'access_token' => $access_token,
-		'expires_in' => $eduid_auth->config->service_token_duration
+		'token_type' => 'bearer',
+		'access_token' => $previous_token_record->access_token,
+		'expires_in' => intval($previous_token_record->expires_in),
+		'refresh_token' => $previous_token_record->refresh_token
 	));
 } else {
 	echo json_encode( $eduid_auth->error(2) );
