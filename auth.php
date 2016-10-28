@@ -115,6 +115,18 @@ class auth_plugin_eduid extends auth_plugin_base {
 				$error["exception"] = 'unknown_user';
 				$error["message"] = 'The selected user has never accessed the website';
 				break;
+			case 6:
+				$error["exception"] = 'invalid_request';
+				$error["message"] = 'The revoke request is not valid. Please provide the token and token_type_hint parameters. token_type_hint should be access_token or refresh_token.';
+				break;
+			case 7:
+				$error["exception"] = 'revoking_permission_not_valid';
+				$error["message"] = 'The current token does not belong to the authenticated user.';
+				break;
+			case 8:
+				$error["exception"] = 'revoking_not_necessary';
+				$error["message"] = 'The authenticated user has no tokens to revoke.';
+				break;
 			default:
 				$error["exception"] = 'unknown_error_exception';
 				$error["message"] = 'Unknown server error!';

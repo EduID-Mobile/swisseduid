@@ -8,9 +8,27 @@ header('Content-type: application/json');
 $eduid_auth = get_auth_plugin('eduid');
 $headers = getallheaders();
 
+function init_tokens($user, $access_token, $refresh_token) {
+	global $DB;
+	// clear previous record
+	$DB->delete_records('auth_eduid_tokens', array('userid' => $user->id));
+	// prepare the new record
+	$record = new stdClass();
+	$record->userid = $user->id;
+	$record->access_token = $access_token;
+	$record->refresh_token = $refresh_token;
+	$record->expiration = time() + $eduid_auth->config->service_token_duration;
+	$record->expires_in = $eduid_auth->config->service_token_duration;
+	$DB->insert_record('auth_eduid_tokens', $record);
+	return $DB->get_record('auth_eduid_tokens', array('userid' => $user->id));
+}
+
 // The needed parameter is the code passed in the http header as Authorization.
 if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 /* if( true ) { */
+	// store the service access token in the database
+	global $DB;
+
 	$output = request( $eduid_auth->config->eduid_user_info_endpoint, $headers['Authorization'] );
 	$user_info = json_decode($output);
 
@@ -20,10 +38,6 @@ if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 	// generate the service access token, very simple for now. Missing the device information.
 	$access_token = sha1($user_info->uniqueID . random_string() . time());
 	$refresh_token = sha1($user_info->uniqueID . random_string() . time());
-
-
-	// store the service access token in the database
-	global $DB;
 
 	// get the user data
 	$user = $DB->get_record('user', array('username' => $user_info->uniqueID), 'id' );
@@ -35,15 +49,9 @@ if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 	// check for a previous valid record
 	$previous_token_record = $DB->get_record('auth_eduid_tokens', array('userid' => $user->id));
 	if($previous_token_record === false) {
-		// prepare the new record
-		$record = new stdClass();
-		$record->userid = $user->id;
-		$record->access_token = $access_token;
-		$record->refresh_token = $refresh_token;
-		$record->expiration = time() + $eduid_auth->config->service_token_duration;
-		$record->expires_in = $eduid_auth->config->service_token_duration;
-		$DB->insert_record('auth_eduid_tokens', $record);
-		$previous_token_record = $DB->get_record('auth_eduid_tokens', array('userid' => $user->id));
+		$previous_token_record = init_tokens($user, $access_token, $refresh_token);
+	} elseif(empty($previous_token_record->access_token) || empty($previous_token_record->refresh_token)) {
+		$previous_token_record = init_tokens($user, $access_token, $refresh_token);
 	} elseif($previous_token_record->expiration < time()) {
 		$previous_token_record->access_token = $access_token;
 		$previous_token_record->expiration = time() + $eduid_auth->config->service_token_duration;
@@ -52,6 +60,7 @@ if( isset($headers['Authorization']) and !empty($headers['Authorization']) ) {
 		$access_token = $previous_token_record->access_token;
 		$refresh_token = $previous_token_record->refresh_token;
 	}
+
 	// give the service access token as output
 	echo json_encode(array(
 		'token_type' => 'bearer',

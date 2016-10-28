@@ -48,7 +48,7 @@ $params_check = params_valid();
 if( $params_check === true ) {
 	// check the service access token first
 	$service_access_record = $DB->get_record('auth_eduid_tokens', array('access_token' => $headers['Authorization']));
-	/* $service_access_record = $DB->get_record('auth_eduid_tokens', array('access_token' => 'f4bb00f0061360a9cf2359598a1e840f77242b5f')); */
+	/* $service_access_record = $DB->get_record('auth_eduid_tokens', array('access_token' => 'd816661203bcd652c92bd4b65731feaadaebd5b4')); */
 	if($service_access_record === false || $service_access_record->expiration < time()) {
 		echo json_encode( $eduid_auth->error(3) ); return;
 	}
