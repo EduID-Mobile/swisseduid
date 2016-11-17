@@ -6,13 +6,12 @@
  * *********************************************************************** */
 
 // set the include path so we can find our classes
-set_include_path("./lib" . PATH_SEPARATOR .
-                get_include_path());
+set_include_path("./lib" . PATH_SEPARATOR . get_include_path());
 
 // include autoloader
 include_once('eduid.auto.php');
 
-use \EduID\Service\Error as ErrorService;
+use \EduID\Error as ErrorService;
 
 if(array_key_exists("PATH_INFO", $_SERVER)) {
     $pi = explode("/", $_SERVER["PATH_INFO"]);
