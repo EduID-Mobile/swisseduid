@@ -24,7 +24,7 @@ class Authority extends ModelFoundation {
     }
 
     public function authorityId() {
-        return $this->service ? $this->service->authority_id : 0;
+        return $this->service ? $this->service->id : 0;
     }
 
     public function verifyAssertion($serviceToken) {

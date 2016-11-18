@@ -25,7 +25,7 @@
     </TABLE>
     <TABLE NAME="auth_eduid_authorities" COMMENT="This table holds the keys and tokens for the registered authorities ">
         <FIELDS>
-            <FIELD NAME="authority_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+            <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
             <FIELD NAME="authority_name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
             <FIELD NAME="authority_url"  TYPE="char" LENGTH="1024" NOTNULL="false" SEQUENCE="false"/>
             <FIELD NAME="authority_shared_token" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
@@ -33,7 +33,7 @@
             <FIELD NAME="authority_public_key" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The public key that the authority uses for working with moodle"/>
         </FIELDS>
         <KEYS>
-            <KEY NAME="primary" TYPE="primary" FIELDS="authority_id"/>
+            <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         </KEYS>
     </TABLE>
 </TABLES>

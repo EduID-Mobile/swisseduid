@@ -40,6 +40,8 @@ class auth_plugin_eduid extends auth_plugin_base {
      * @param array $page An object containing all the data for this page.
      */
     function config_form($config, $err, $user_fields) {
+        global $CFG, $DB;
+		$authority_entries = $DB->get_records('auth_eduid_authorities');
         include "config.php";
     }
 
@@ -50,8 +52,6 @@ class auth_plugin_eduid extends auth_plugin_base {
      * @param object $config Configuration object
      */
     function process_config($config) {
-        global $CFG;
-		
         if(empty($config->eduid_user_info_endpoint)) {
 			set_config('', $config->eduid_user_info_endpoint, 'auth/eduid');
 		} else {
@@ -70,12 +70,86 @@ class auth_plugin_eduid extends auth_plugin_base {
 			return false;
 		}
 
-		return true;
+		if( !$this->updateAuthorityEntries($config->authority) ) {
+			return false;
+		}
+
+		if( !$this->addAuthorityEntries($config->new_authority) ) {
+			return false;
+		}
+
+		return false;
     }
+
+	function addAuthorityEntries($entries) {
+        global $CFG, $DB;
+		// add new entries
+		foreach($entries as $num => $entry) {
+			if(
+				empty($entry["authority_name"]) ||
+				empty($entry["authority_url"]) ||
+				empty($entry["authority_shared_token"]) ||
+				empty($entry["privkey_for_authority"]) ||
+				empty($entry["authority_public_key"])
+			) {
+				print_r('ignoring the following');
+				print_r($entry);
+				continue; // ignore incomplete entries
+			} else {
+				$DB->insert_record('auth_eduid_authorities',
+					array(
+						"authority_name" => $entry["authority_name"],
+						"authority_url" => $entry["authority_url"],
+						"authority_shared_token" => $entry["authority_shared_token"],
+						"privkey_for_authority" => $entry["privkey_for_authority"],
+						"authority_public_key" => $entry["authority_public_key"]
+					)
+				);
+			}
+		}
+
+		return true;
+	}
+
+	function updateAuthorityEntries($entries) {
+        global $CFG, $DB;
+		// purge the deleted entries
+		$current_authority_entries = $DB->get_records('auth_eduid_authorities');
+		foreach($current_authority_entries as $authority) {
+			if(!array_key_exists($authority->id, $entries)) {
+				$DB->delete_records('auth_eduid_authorities', array('id' => $authority->id));
+			}
+		}
+		// update the rest
+		$current_authority_entries = $DB->get_records('auth_eduid_authorities');
+		foreach($current_authority_entries as $authority) {
+			/* print_r($content); continue; */
+			if(
+				$authority->authority_name != $entries[$authority->id]["authority_name"] ||
+				$authority->authority_url != $entries[$authority->id]["authority_url"] ||
+				$authority->authority_shared_token != $entries[$authority->id]["authority_shared_token"] ||
+				$authority->privkey_for_authority != $entries[$authority->id]["privkey_for_authority"] ||
+				$authority->authority_public_key != $entries[$authority->id]["authority_public_key"]
+			) {
+				$DB->update_record('auth_eduid_authorities',
+					array(
+						"id" => $authority->id,
+						"authority_name" => $entries[$authority->id]["authority_name"],
+						"authority_url" => $entries[$authority->id]["authority_url"],
+						"authority_shared_token" => $entries[$authority->id]["authority_shared_token"],
+						"privkey_for_authority" => $entries[$authority->id]["privkey_for_authority"],
+						"authority_public_key" => $entries[$authority->id]["authority_public_key"]
+					)
+				);
+			}
+		}
+
+		return true;
+	}
 
 	function create_user_session($userid) {
 		// check if the user is valid
-		$USER = $DB->get_record('user', array('username'=>$_POST['username']) );
+		$USER = $DB->get_record('user', array('username' => $_POST['username']) );
 		if(empty($USER)) {
 			return $this->error(2);
 		} else {
