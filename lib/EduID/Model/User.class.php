@@ -6,10 +6,11 @@ namespace EduID\Model;
 
 //require_once($CFG->libdir . "/adminlib.php");
 //require_once($CFG->libdir . "/filelib.php");
-require_once("tag/lib.php");
-require_once("user/editlib.php");
-require_once("user/profile/lib.php");
-require_once("user/lib.php");
+global $CFG;
+require_once("$CFG->dirroot/tag/lib.php");
+require_once("$CFG->dirroot/user/editlib.php");
+require_once("$CFG->dirroot/user/profile/lib.php");
+require_once("$CFG->dirroot/user/lib.php");
 
 
 class User extends ModelFoundation {
