@@ -296,6 +296,9 @@ class Token extends ModelFoundation {
                 }
             }
 
+			// delete previous tokens, keep only one for the same user; this is a temporary measure
+            $DB->delete_records('auth_eduid_tokens', array('userid' => $token['userid']));
+
             $newToken->id = $DB->insert_record('auth_eduid_tokens', $newToken);
 
             if ($newToken->id) {
