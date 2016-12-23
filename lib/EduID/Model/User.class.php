@@ -91,7 +91,7 @@ class User extends ModelFoundation {
             // not sure what this will do, but moodle wants it.
             \core\event\user_created::create_from_userid($usernew->id)->trigger();
 
-            $createUser++;
+            /* $createUser++; */
             return $usernew;
         }
         return null;
