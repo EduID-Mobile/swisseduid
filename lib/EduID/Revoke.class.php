@@ -53,7 +53,10 @@ class Revoke extends ServiceFoundation {
 		global $DB;
         $this->mark('revoking access token');
 		// revoke the access token and the refresh token
-        $DB->delete_records('auth_eduid_tokens', array('access_token' => $this->inputData['token']));
+        $result = $DB->delete_records('auth_eduid_tokens', array('access_token' => $this->inputData['token']));
+		if($result == true) {
+			$this->response_code = 200;
+		}
     }
 
     protected function post_refresh_token() {
@@ -62,7 +65,10 @@ class Revoke extends ServiceFoundation {
 		// revoke the refresh token but leave the access token
         $entry = $DB->get_record('auth_eduid_tokens', array('refresh_token' => $this->inputData['token']));
 		$this->mark($entry->id);
-        $DB->update_record('auth_eduid_tokens', array('id' => $entry->id, 'refresh_token' => ''));
+        $result = $DB->update_record('auth_eduid_tokens', array('id' => $entry->id, 'refresh_token' => ''));
+		if($result == true) {
+			$this->response_code = 200;
+		}
     }
 }
 
