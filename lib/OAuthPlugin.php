@@ -236,6 +236,10 @@ trait OAuthPlugin {
             $DB->update_record("auth_oauth_tokens", $attr);
         }
     }
+
+    protected function getTokenUrl($state) {
+        return null;
+    }
 }
 
 ?>
