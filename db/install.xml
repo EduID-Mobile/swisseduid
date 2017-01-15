@@ -1,6 +1,70 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="auth/eduid/db" VERSION="20160627" COMMENT="XMLDB file for Moodle auth/eduid" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
 <TABLES>
+    <TABLE NAME="auth_oauth_state" COMMENT="The OAuth State allows moodle to track the kind of authorization that is in process.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="token" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The assertion token before the primary token. ONLY used by Trust Agents, NULL otherwise."/>
+        <FIELD NAME="token_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the tokenid for the issuing primary token (NULL if primary)."/>
+        <FIELD NAME="refresh_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the tokenid to be refreshed (NULL if not refreshing)"/>
+        <FIELD NAME="azp_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the authorization service this state is used with."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="auth_oauth_azp" COMMENT="OAuth Authorization Servers to which Moodle is a client">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="url" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="client_id" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="flow" TYPE="char" LENGTH="20"  NOTNULL="true" SEQUENCE="false" COMMENT="code, implicit, hybrid, or assertion"/>
+        <FIELD NAME="auth_type" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false" COMMENT="which moodle authorization type to use (e.g shibboleth if different auth methods are allowed)"/>
+        <FIELD NAME="credentials" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Any credentials for authorizing moodle with the authorization service. This filed is typically empty."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="auth_oauth_keys" COMMENT="cryptographic keys for communicating with the authorization service">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="kid" TYPE="char" LENGTH="1000" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="jku" TYPE="char" LENGTH="1000" NOTNULL="false"  SEQUENCE="false"/>
+        <FIELD NAME="key" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="azp_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="token_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="keyid" UNIQUE="true" FIELDS="kid, jku"/>
+        <INDEX NAME="authority_a" UNIQUE="true" FIELDS="kid, azp_id"/>
+        <INDEX NAME="token_agent_t" UNIQUE="true" FIELDS="kid, token_id"/>
+        <INDEX NAME="authority_u" UNIQUE="true" FIELDS="jku, azp_id"/>
+        <INDEX NAME="authority_uk" UNIQUE="true" FIELDS="azp_id, jku, kid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="auth_oauth_tokens" COMMENT="OAuth Authorities">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="Which user is associated with the token."/>
+        <FIELD NAME="azp_id" TYPE="id" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="points to the authorization service, that authorized this token"/>
+        <FIELD NAME="parent_id" TYPE="id" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="points to the token id that has been used for issuing a secondary token (NULL if not a secondary token)"/>
+        <FIELD NAME="access_token" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="refresh_token" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="created" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="timestamp when initially created"/>
+        <FIELD NAME="expires" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when access_token expires"/>
+        <FIELD NAME="initial_access_token" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Keeps the original access token, so a trust agent can revoke a token even after it has expired and has been refreshed"/>
+        <FIELD NAME="initial_refresh_token" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Keeps the original access token, so a trust agent can revoke a token even after it has expired and has been refreshed"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
     <TABLE NAME="auth_eduid_tokens" COMMENT="Swiss edu-ID Tokens table">
         <FIELDS>
             <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
