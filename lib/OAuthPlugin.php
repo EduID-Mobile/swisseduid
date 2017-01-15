@@ -7,10 +7,11 @@ require_once("$CFG->dirroot/user/lib.php");
 
 require_once("$CFG->dirroot/webservice/lib.php");
 
-// this creates a trait for our operational class
+// this creates a trait for the PowerTLA service model
+//
 // This trait injects plugin specific functions to the service model.
-// This allows to update the plugin specific logic independently from the
-// service handler
+// This allows updating the plugin specific logic independently from the
+// service models in PowerTLA
 
 trait OAuthPlugin {
     private $plugin;
@@ -125,16 +126,16 @@ trait OAuthPlugin {
 
         $attrMap = [];
         $attrMap[$field] = $token;
-        $DB->delete_records("pwrtla_oauth_tokens", $attrMap);
+        $DB->delete_records("auth_oauth_tokens", $attrMap);
 
         $attrMap = [];
         $attrMap["initial_$field"] = $token;
-        $DB->delete_records("pwrtla_oauth_tokens", $attrMap);
+        $DB->delete_records("auth_oauth_tokens", $attrMap);
     }
 
     protected function getKey($attr) {
         global $DB;
-        $object = $DB->get_record("pwrtla_oauth_keys", $attr);
+        $object = $DB->get_record("auth_oauth_keys", $attr);
         if (!$object) {
             throw new \RESTling\Exception\Forbidden();
         }
@@ -143,7 +144,7 @@ trait OAuthPlugin {
 
     protected function verifyIssuer($iss, $id) {
         global $DB;
-        $object = $DB->get_record("pwrtla_oauth_azp", ["id" => $kid]);
+        $object = $DB->get_record("auth_oauth_azp", ["id" => $kid]);
         if (!$object) {
             throw new \RESTling\Exception\Forbidden();
         }
@@ -154,14 +155,14 @@ trait OAuthPlugin {
 
     protected function storeState($state, $attr) {
         $attr["id"] = $state;
-        $DB->insert_record("pwrtla_oauth_state", $attr);
+        $DB->insert_record("auth_oauth_state", $attr);
     }
 
     protected function loadState($state) {
         // loads the state Object
         global $DB;
 
-        $stateObj = $DB->get_record("pwrtla_oauth_state", ["id" => $state]);
+        $stateObj = $DB->get_record("auth_oauth_state", ["id" => $state]);
         if (!$stateObj) {
             throw new \RESTling\Exception\Forbidden();
         }
@@ -192,7 +193,7 @@ trait OAuthPlugin {
         $attr["initial_access_token"]  = $attr["access_token"];
         $attr["initial_refresh_token"] = $attr["refresh_token"];
 
-        $DB->insert_record("pwrtla_oauth_tokens", $attr);
+        $DB->insert_record("auth_oauth_tokens", $attr);
 
         return [$attr["access_token"], $attr["refresh_token"], $expires];
     }
@@ -227,12 +228,12 @@ trait OAuthPlugin {
             if (!empty($tokenId)) {
                 $attr["parent"] = $tokenId;
             }
-            $DB->insert_record("pwrtla_oauth_tokens", $attr);
+            $DB->insert_record("auth_oauth_tokens", $attr);
         }
         else {
             // refresh token
             $attr["id"] = $updateId;
-            $DB->update_record("pwrtla_oauth_tokens", $attr);
+            $DB->update_record("auth_oauth_tokens", $attr);
         }
     }
 }
