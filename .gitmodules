@@ -1,7 +1,0 @@
-[submodule "lib/RESTling"]
-	path = lib/RESTling
-	url = https://github.com/phish108/RESTling.git
-[submodule "lib/jwt"]
-	path = lib/jwt
-	url = https://github.com/lcobucci/jwt.git
-	branch = 3.1
