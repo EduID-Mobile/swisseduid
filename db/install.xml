@@ -34,7 +34,7 @@
         <FIELD NAME="jku" TYPE="char" LENGTH="1000" NOTNULL="false"  SEQUENCE="false"/>
         <FIELD NAME="key" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="azp_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="token_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="token_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Only used for trust agents"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
