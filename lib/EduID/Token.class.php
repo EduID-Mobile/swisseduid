@@ -161,7 +161,7 @@ class Token extends ServiceFoundation {
         // the code is a JWT with the client as subject and that is signed
         // using the same key as the authorization token.
 
-        $jwt = $this->tokenValidator->processJWT($this->inputData["authorization_code"]);
+        $jwt = $this->tokenValidator->processJWT($this->inputData["code"]);
         if ($jwt &&
             $jwt->getClaim("aud") == $this->targetAudience() &&
             $jwt->getClaim("sub") == $client &&
