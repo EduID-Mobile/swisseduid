@@ -238,7 +238,19 @@ trait OAuthPlugin {
     }
 
     protected function getTokenUrl($state) {
-        return null;
+        global $DB;
+
+        $stateObj = $DB->get_record("auth_oauth_state", ["id" => $state]);
+        if (!$stateObj) {
+            throw new \RESTling\Exception\Forbidden();
+        }
+
+        $azp = $DB->get_record("auth_oauth_azp", ["id" => $stateObj->azp_id]);
+        if (!$azp) {
+            throw new \RESTling\Exception\Forbidden();
+        }
+
+        return $azp->url . "/token";
     }
 }
 
