@@ -1,4 +1,5 @@
 <?php
+
 function request($url, $authorization) {
 	// create curl resource
 	$ch = curl_init();
@@ -17,4 +18,3 @@ function request($url, $authorization) {
 
 	return $output;
 }
-?>

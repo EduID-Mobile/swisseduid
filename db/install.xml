@@ -18,10 +18,13 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="url" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="iss" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="String used by the authority to identify itself"/>
         <FIELD NAME="client_id" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="flow" TYPE="char" LENGTH="20"  NOTNULL="true" SEQUENCE="false" COMMENT="code, implicit, hybrid, or assertion"/>
         <FIELD NAME="auth_type" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false" COMMENT="which moodle authorization type to use (e.g shibboleth if different auth methods are allowed)"/>
         <FIELD NAME="credentials" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Any credentials for authorizing moodle with the authorization service. This filed is typically empty."/>
+        <FIELD NAME="attrMap" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="contains the attribute mapping per authority"/>
+        <FIELD NAME="inactive" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false" COMMENT="flag an authority as inactive"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
