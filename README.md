@@ -13,7 +13,7 @@ To install please proceed as follows:
 
 1. Decompress the eduidauth archive and move the rename the folder to eduidauth.
 
-   You also can use this command: git clone git://github.com/arael/moodle_eduid.git eduid
+   You also can use this command: git clone git://github.com/BLC-HTWChur/oauth2.git oauth2
 
 2. Move the folder to MOODLEROOT/auth
 
