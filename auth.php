@@ -161,158 +161,23 @@ class auth_plugin_eduid extends auth_plugin_base {
         ];
     }
 
-	function addAuthorityEntries($entries) {
-        global $CFG, $DB;
-		// add new entries
-		foreach($entries as $num => $entry) {
-			if(
-				empty($entry["authority_name"]) ||
-				empty($entry["authority_url"]) ||
-                empty($entry["client_id"]) ||
-				empty($entry["authority_shared_token"]) ||
-				empty($entry["privkey_for_authority"]) ||
-				empty($entry["authority_public_key"])
-			) {
-				print_r('ignoring the following');
-				print_r($entry);
-				continue; // ignore incomplete entries
-			} else {
-                // INSERT OR UPDATE?
-				$DB->insert_record('auth_oauth_azp',
-					array(
-						"name" => $entry["authority_name"],
-						"url" => $entry["authority_url"],
-						"client_id" => $entry["client_id"],
-                        "flow" => "hybrid",
-                        "auth_type" => "shibboleth"
-                    )
-                );
+    function loginpage_idp_list($wantsurl) {
+        global $DB, $CFG;
 
-                // get the id
-                $azp = $DB->get_record('auth_oauth_azp', ['
-                    url' => $entry['authority_url']
-                ]);
+        // load the registered idps create create hook links
+        $retval = [];
 
-                // Keys are handled differently
-                $azp_id = $azp->id;
+        $idps = $DB->get_records("auth_oauth_azp");
 
-                // insert the local private key
-                $kid = 'private';
-                $key = $entry["privkey_for_authority"];
-                $DB->insert_record('auth_oauth_keys',[
-                    'azp_id' => $azp_id,
-                    'kid' => $kid,
-                    'key' => $key
-                ]);
+        $myurl = $CFG->wwwroot . "/local/tla/service.php/identity/oauth2/id";
 
-                // insert the authorization public key
-                $kid = $azp->url;
-                $key = $entry["authority_public_key"];
-                $DB->insert_record('auth_oauth_keys', [
-                    'azp_id' => $azp_id,
-                    'kid' => $kid,
-                    'key' => $key
-                ]);
-			}
-		}
-		return true;
-	}
-
-	function updateAuthorityEntries($entries) {
-        global $CFG, $DB;
-		// purge the deleted entries
-		$current_authority_entries = $DB->get_records('auth_eduid_authorities');
-		foreach($current_authority_entries as $authority) {
-			if(!array_key_exists($authority->id, $entries)) {
-				$DB->delete_records('auth_eduid_authorities', array('id' => $authority->id));
-			}
-		}
-		// update the rest
-		$current_authority_entries = $DB->get_records('auth_eduid_authorities');
-		foreach($current_authority_entries as $authority) {
-			/* print_r($content); continue; */
-			if(
-				$authority->authority_name != $entries[$authority->id]["authority_name"] ||
-				$authority->authority_url != $entries[$authority->id]["authority_url"] ||
-				$authority->authority_shared_token != $entries[$authority->id]["authority_shared_token"] ||
-				$authority->privkey_for_authority != $entries[$authority->id]["privkey_for_authority"] ||
-				$authority->authority_public_key != $entries[$authority->id]["authority_public_key"]
-			) {
-				$DB->update_record('auth_eduid_authorities',
-					array(
-						"id" => $authority->id,
-						"authority_name" => $entries[$authority->id]["authority_name"],
-						"authority_url" => $entries[$authority->id]["authority_url"],
-						"authority_shared_token" => $entries[$authority->id]["authority_shared_token"],
-						"privkey_for_authority" => $entries[$authority->id]["privkey_for_authority"],
-						"authority_public_key" => $entries[$authority->id]["authority_public_key"]
-					)
-				);
-			}
-		}
-
-		return true;
-	}
-
-	function create_user_session($userid) {
-		// check if the user is valid
-		$USER = $DB->get_record('user', array('username' => $_POST['username']) );
-		if(empty($USER)) {
-			return $this->error(2);
-		} else {
-			return true;
-		}
-	}
-
-	function error($code) {
-		$error = array(
-				'exception' => 'unknown exception',
-				'message' => 'no message',
-				'debuginfo'=>'code: '.$code
-				);
-
-		switch ($code) {
-			case 0:
-				$error["exception"] = 'authentication_failed';
-				$error["message"] = 'Authentication failed. Authorization code not valid.';
-				break;
-			case 1:
-				$error["exception"] = 'grant_type_exception';
-				$error["message"] = 'The grant_type is not valid!';
-				break;
-			case 2:
-				$error["exception"] = 'code_exception';
-				$error["message"] = 'The code is not valid!';
-				break;
-			case 3:
-				$error["exception"] = 'access_token_exception';
-				$error["message"] = 'The access token is not valid!';
-				break;
-			case 4:
-				$error["exception"] = 'service_shortname_exception';
-				$error["message"] = 'The service shortname is not valid!';
-				break;
-			case 5:
-				$error["exception"] = 'unknown_user';
-				$error["message"] = 'The selected user has never accessed the website';
-				break;
-			case 6:
-				$error["exception"] = 'invalid_request';
-				$error["message"] = 'The revoke request is not valid. Please provide the token and token_type_hint parameters. token_type_hint should be access_token or refresh_token.';
-				break;
-			case 7:
-				$error["exception"] = 'revoking_permission_not_valid';
-				$error["message"] = 'The current token does not belong to the authenticated user.';
-				break;
-			case 8:
-				$error["exception"] = 'revoking_not_necessary';
-				$error["message"] = 'The authenticated user has no tokens to revoke.';
-				break;
-			default:
-				$error["exception"] = 'unknown_error_exception';
-				$error["message"] = 'Unknown server error!';
-				break;
-		}
-		return $error;
-	}
+        foreach ($idps as $idp) {
+            $retval[] = [
+                "icon" => pix_icon("oauth.png", $idp->name, $component),
+                "url"  => moodle_url($myurl,["idp" => $idp->id]),
+                "name" => $idp->name
+            ];
+        }
+        return $retval;
+    }
 }
