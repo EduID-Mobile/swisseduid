@@ -127,7 +127,7 @@ trait OAuthPlugin {
  	 * @return void
 	 */
 	protected function getPrivateKey() {
-        return $this->oaMgr->getPrivateKey()->key;
+        return $this->oaMgr->getPrivateKey()->crypt_key;
     }
 
     /**

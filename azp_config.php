@@ -51,7 +51,7 @@ foreach ($keyList as $key) {
         <ul>
             <li><input id="kid" name="kid" type="text" placeholder="Key Id (as provided by Authority)"></li>
             <li><input id="jku" name="jku" type="text" placeholder="jku (as provided by the authority)"></li>
-            <li><textarea id="key" name="key"></textarea></li>
+            <li><textarea id="crypt_key" name="crypt_key"></textarea></li>
         </ul>
         <div>
             <input type="submit" id="storekey" name="storekey" value="Add Key">

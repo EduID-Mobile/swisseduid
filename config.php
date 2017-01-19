@@ -8,7 +8,7 @@ if (isset($PK)) {
 }
 ?>
     <div>
-        <textarea name="pk"></textarea>
+        <textarea id="pk" name="pk"></textarea>
     </div>
     <div>
         <input type="submit" id="storepk" name="storepk" value="Update">

@@ -7,7 +7,7 @@ if (!defined('MOODLE_INTERNAL')) {
 require_once($CFG->libdir.'/authlib.php');
 require_once(__DIR__ . '/lib/OAuthManager.php');
 
-class auth_plugin_eduid extends auth_plugin_base {
+class auth_plugin_oauth2 extends auth_plugin_base {
 
     // - overview/config
     // - azp
@@ -19,9 +19,10 @@ class auth_plugin_eduid extends auth_plugin_base {
     /**
      * Constructor.
      */
-    function auth_plugin_eduid() {
-        $this->authtype = 'eduid';
-		$this->config = get_config('auth/eduid');
+    function auth_plugin_oauth2() {
+        $this->authtype = 'oauth2';
+		$this->config = get_config('auth/oauth2');
+        $this->manager = new OAuthManager();
     }
 
     function user_login($username, $password) {
@@ -40,7 +41,7 @@ class auth_plugin_eduid extends auth_plugin_base {
 	function can_be_manually_set() { return false; }
 
     // chooses the configuration view to be shown
-    public function validate_form($config, $err) {
+    public function validate_form($config, &$err) {
         $this->perspective = "config";
         if (array_key_exists("azp", $config)) {
             $this->perspective = "azp";
@@ -68,7 +69,7 @@ class auth_plugin_eduid extends auth_plugin_base {
     function config_form($config, $err, $user_fields) {
         global $CFG, $DB;
 		$authorities = $DB->get_records('auth_oauth_azp');
-        $azpurl = "$CFG->wwwroot/$CFG->admin/apz.php?auth=$auth&azp=";
+        $azpurl = "$CFG->wwwroot/$CFG->admin/apz.php?auth=oauth2&azp=";
         $tlaurl = "$CFG->wwwroot/local/tla/service.php/identity/oauth2";
 
         // load perspective
@@ -91,7 +92,14 @@ class auth_plugin_eduid extends auth_plugin_base {
                 break;
             default:
                 $file = "config.php";
-                $PK = $this->getPrivateKey();
+                if ($this->manager) {
+                    try {
+                        $PK = $this->manager->getPrivateKey();
+                    }
+                    catch (Exception $err) {
+                        $PK = null;
+                    }
+                }
                 break;
         }
 
@@ -104,9 +112,10 @@ class auth_plugin_eduid extends auth_plugin_base {
      * @param object $config Configuration object
      */
     function process_config($config) {
+        $config = (array) $config;
         if (array_key_exists("storekey", $config) && isset($config["storekey"])) {
             $changes = [];
-            foreach (["kid", "jku", "key", "azp", "keyid"] as $attr) {
+            foreach (["kid", "jku", "crypt_key", "azp", "keyid"] as $attr) {
                 if (array_key_exists($attr, $config) && !empty($config[$attr])) {
                     $changes[$attr] = $config[$attr];
                 }
@@ -137,7 +146,7 @@ class auth_plugin_eduid extends auth_plugin_base {
             //return false;
         }
         elseif (array_key_exists("storepk", $config)) {
-            if (array_key_exists("pk", $config)) {
+            if (array_key_exists("pk", $config) && !empty($config["pk"])) {
                 $this->manager->setPrivateKey($config["pk"]);
             }
             //return false;

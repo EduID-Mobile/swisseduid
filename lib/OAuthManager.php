@@ -38,7 +38,7 @@ class OAuthManager {
         $keyinfo = $DB->get_record("auth_oauth_keys", [
             "kid" => "private",
             "azp_id" => $this->azp,
-            "token"  => null,
+            "token_id"  => null,
             "jku"    => null
         ]);
 
@@ -48,29 +48,37 @@ class OAuthManager {
         return $keyinfo;
     }
 
-    public function setPrivateKey(string $key) {
+    public function setPrivateKey($key) {
         global $DB;
-
-        $ki = $this->getPrivateKey();
+        error_log("key is $key");
+        try {
+            $ki = $this->getPrivateKey();
+        }
+        catch (Exception $err) {
+            $ki = null;
+        }
 
         if (!$ki) {
             $DB->insert_record("auth_oauth_keys", [
                 "kid" => "private",
-                "key" => $key,
+                "crypt_key" => $key,
                 "azp_id" => $this->azp
             ]);
         }
         else {
             $DB->update_record("auth_oauth_keys", [
                 "id"  => $ki->id,
-                "kid" => "private",
-                "key" => $key,
-                "azp_id" => $this->azp
+                "crypt_key" => $key
             ]);
         }
         // check if we can find the private key, which throws an error
-        $ki = $this->getPrivateKey();
-        if ($ki->key !== $key) {
+        try {
+            $ki = $this->getPrivateKey();
+        }
+        catch (Exception $err) {
+            $ki = null;
+        }
+        if ($ki && $ki->crypt_key !== $key) {
             throw new Exception("Error Storing Private Key");
         }
     }
@@ -108,8 +116,8 @@ class OAuthManager {
         }
         else {
             // add default attribute mapping on creation.
-            if (!array_key_exists("attrMap", $info) || empty($info["attrMap"])) {
-                $info["attrMap"] = $this->getDefaultMapping();
+            if (!array_key_exists("attr_map", $info) || empty($info["attr_map"])) {
+                $info["attr_map"] = $this->getDefaultMapping();
             }
 
             $DB->insert_record("auth_oauth_azp", $info);
@@ -130,9 +138,9 @@ class OAuthManager {
     }
 
     public function getMapping() {
-        if ($rec = $this->get() && !empty($rec->attrMap)) {
+        if ($rec = $this->get() && !empty($rec->attr_map)) {
             try {
-                $mapping = json_decode($rec->attrMap, true);
+                $mapping = json_decode($rec->attr_map, true);
             }
             catch (Exception $err) {
                 return [];
@@ -183,7 +191,7 @@ class OAuthManager {
         }
 
         foreach (array_keys($keyInfo) as $attr) {
-            if (!in_array($attr, ["key", "id", "kid", "jku", "token_id"])) {
+            if (!in_array($attr, ["crypt_key", "id", "kid", "jku", "token_id"])) {
                 unset($keyInfo[$attr]);
             }
         }
