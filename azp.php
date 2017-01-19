@@ -4,7 +4,8 @@
  * manage key chains of authorization servers.
  */
 
- require_once '../config.php';
+ // require_once '../../config.php';
+ require_once '/var/www/html/moodle/config.php'; // development only, due to symlinks
  require_once $CFG->libdir.'/adminlib.php';
 
  $auth = required_param('auth', PARAM_PLUGIN);
@@ -45,9 +46,11 @@
          }
      }
  } else {
-     $frmlegacystyle = get_config('auth/'.$auth);
-     $frmnewstyle    = get_config('auth_'.$auth);
-     $frm = (object)array_merge((array)$frmlegacystyle, (array)$frmnewstyle);
+     $frm = (object)$_GET;
+     $authplugin->validate_form($frm, $err);
+     // $frmlegacystyle = get_config('auth/'.$auth);
+     // $frmnewstyle    = get_config('auth_'.$auth);
+      // array_merge((array)$frmlegacystyle, (array)$frmnewstyle);
  }
 
 
@@ -77,7 +80,7 @@ echo $OUTPUT->box_end();
 echo "<hr />\n";
 $authplugin->config_form($frm, $err, $user_fields);
 echo $OUTPUT->box_end();
-echo '<p style="text-align: center"><input type="submit" value="' . get_string("savechanges") . "\" /></p>\n";
+//echo '<p style="text-align: center"><input type="submit" value="' . get_string("savechanges") . "\" /></p>\n";
 echo "</div>\n";
 echo "</form>\n";
 

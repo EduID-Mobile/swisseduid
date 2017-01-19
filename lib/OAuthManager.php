@@ -50,7 +50,7 @@ class OAuthManager {
 
     public function setPrivateKey($key) {
         global $DB;
-        error_log("key is $key");
+        // error_log("key is $key");
         try {
             $ki = $this->getPrivateKey();
         }
@@ -170,17 +170,17 @@ class OAuthManager {
     }
 
 
-    public function getKey($kid) {
+    public function getKey($keyid) {
         global $DB;
-        return $DB->get_records("auth_oauth_keys", ["azp_id" => $this->azp, "kid" => $kid]);
+        return $DB->get_record("auth_oauth_keys", ["azp_id" => $this->azp, "id" => $keyid]);
     }
 
     public function storeKey($keyInfo) {
         global $DB;
-
-        foreach (["kid", "key"] as $k) {
+        $keyInfo = (array) $keyInfo;
+        foreach (["kid", "crypt_key"] as $k) {
             if (!array_key_exists($k, $keyInfo)) {
-                throw new Exception("Missing Key Attribute");
+                throw new Exception("Missing Key Attribute $k ". json_encode($keyInfo));
             }
         }
         if (array_key_exists("keyid", $keyInfo)) {
@@ -197,7 +197,7 @@ class OAuthManager {
         }
         $keyInfo["azp_id"] = $this->azp;
 
-        if (array_key_exists("id")) {
+        if (array_key_exists("id", $keyInfo )) {
             $DB->update_record("auth_oauth_keys", $keyInfo);
         }
         else {
