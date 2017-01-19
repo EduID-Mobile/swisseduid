@@ -7,18 +7,43 @@ require_once("$CFG->dirroot/user/lib.php");
 
 require_once("$CFG->dirroot/webservice/lib.php");
 
-// this creates a trait for the PowerTLA service model
-//
-// This trait injects plugin specific functions to the service model.
-// This allows updating the plugin specific logic independently from the
-// service models in PowerTLA
+require_once(__DIR__ . "/OAuthManager.php");
 
+/**
+ * Trait for the PowerTLA service model
+ *
+ * This trait injects plugin specific functions to the service model.
+ * This allows updating the plugin specific logic independently from the
+ * service models in PowerTLA.
+ *
+ * NOTE: it utilises the plugin's authoziation manager (OAuthManager) to
+ *       minimize code duplication between configuration and runtime
+ */
 trait OAuthPlugin {
     private $plugin;
     private $wsmgr;
     private $service;
+    private $oaMgr;
 
-    protected function inactive() {
+    protected function findTargetAuthority($azpUrl) {
+        if (!$this->oaMgr) {
+            $this->oaMgr = new OAuthManager();
+        }
+        $this->oaMgr->findByUrl($azpUrl);
+        $object = $this->oaMgr->get();
+
+        if (!$object) {
+            throw new \RESTling\Exception\Forbidden();
+        }
+        return (array) $object;
+    }
+
+    /**
+ 	 * verifies, if the plugin is active *and* if the services are exposed.
+ 	 *
+ 	 * @return boolean
+	 */
+	protected function inactive() {
         // moodle is loaded at this point
 
         // Check if the oauth plugin is active
@@ -53,74 +78,36 @@ trait OAuthPlugin {
         return true;
     }
 
-    protected function handleUser($userClaims) {
-        global $DB, $USER;
+    /**
+ 	 * loads the attribute map for the active authority.
+     * The attribute map links Moodle's user attributes with the
+     * assertion claims of the authorization service.
+     *
+     * If the authorization service has no attribute map configured, this
+     * function will return the default attribute mapping.
+ 	 *
+ 	 * @return array $attributeMap
+	 */
+	protected function getAttributeMap() {
+        $map = $this->oaMgr->getMapping();
 
-        // create or update the user
-        $username = $userClaims["sub"];
-        if ($user = $DB->get_record("user", ["username" => $sub])) {
-            // update a user
-            $user = $this->handleAttributeMap($user, $userClaims);
-            user_update_user($user, false, false);
-
-            $USER = $DB->get_record('user', array('id' => $user['id']));
-        }
-        else {
-            // create a new user
-            $user = $this->handleAttributeMap([], $userClaims);
-            $user['id'] = user_create_user($user, false, false);
-            if ($user['id'] > 0)
-            {
-                // moodle wants additional profile setups
-                $usercontext = context_user::instance($user['id']);
-
-                // Update preferences.
-                useredit_update_user_preference($user);
-
-                if (!empty($CFG->usetags)) {
-                    useredit_update_interests($user, $user['interests']);
-                }
-
-                // Update mail bounces.
-                useredit_update_bounces($user, $user);
-
-                // Update forum track preference.
-                useredit_update_trackforums($user, $user);
-
-                // Save custom profile fields data.
-                profile_save_data($user);
-
-                // Reload from db.
-                $usernew = $DB->get_record('user', array('id' => $user['id']));
-
-                // allow Moodle components to respond to the new user.
-                core\event\user_created::create_from_userid($usernew->id)->trigger();
-            }
+        if (empty($map)) {
+            $map = $this->oaMgr->getDefaultMapping();
         }
 
-        return $user["id"];
+        return $map;
     }
 
-    protected function grantInternalToken($userid, $expires) {
-        return external_generate_token(EXTERNAL_TOKEN_PERMANENT,
-                                       $this->service->id,
-                                       $userid,
-                                       context_system::instance(),
-                                       $expires,
-                                       '');
-    }
 
-    protected function startUserSession() {
-        global $USER;
-        \core\session\manager::login_user($USER);
-    }
-
-    protected function getAttributeMap() {
-        // TODO implement map loading
-        return [];
-    }
-
-    protected function deleteToken($field, $token) {
+    /**
+ 	 * deletes a token for a given field.
+     * used by the revocation logic.
+ 	 *
+ 	 * @param string $field - either 'access_token' or 'refresh_token')
+     * @param string $token - the presented token
+ 	 * @return void
+	 */
+	protected function deleteToken($field, $token) {
         // we simply forget about our tokens
         global $DB;
 
@@ -133,7 +120,25 @@ trait OAuthPlugin {
         $DB->delete_records("auth_oauth_tokens", $attrMap);
     }
 
-    protected function getKey($attr) {
+    /**
+ 	 * Returns the private key for the moodle service
+ 	 *
+ 	 * @param type
+ 	 * @return void
+	 */
+	protected function getPrivateKey() {
+        return $this->oaMgr->getPrivateKey()->key;
+    }
+
+    /**
+ 	 * loads a shared key for the given attributes
+     *
+     * used for finding decryption and signing keys.
+ 	 *
+ 	 * @param array $keyAttributes
+ 	 * @return object - the key object
+	 */
+	protected function getKey($attr) {
         global $DB;
         $object = $DB->get_record("auth_oauth_keys", $attr);
         if (!$object) {
@@ -142,23 +147,47 @@ trait OAuthPlugin {
         return $object;
     }
 
-    protected function verifyIssuer($iss, $id) {
+    /**
+ 	 * Verfies if the presented issuer string matches the presented authority
+ 	 *
+     * If the issuer is not verified this function throws a Forbidden
+     * exception.
+     *
+ 	 * @param string $iss - the iss claim
+     * @param id $id - the id of the authority
+ 	 * @return void
+	 */
+	protected function verifyIssuer($iss, $id) {
         global $DB;
-        $object = $DB->get_record("auth_oauth_azp", ["id" => $kid]);
+        $this->oaMgr = new OAuthManager($id);
+        $object = $this->oaMgr->get();
         if (!$object) {
             throw new \RESTling\Exception\Forbidden();
         }
-        if ($object->id != $id) {
+        if ($object->iss != $iss) {
             throw new \RESTling\Exception\Forbidden();
         }
     }
 
-    protected function storeState($state, $attr) {
+    /**
+ 	 * stores the request state for the presented attributes
+ 	 *
+ 	 * @param string $state - the state string as passed to the authorization service
+     * @param array $stateAttributes - informs, which attributes are stored
+ 	 * @return void
+	 */
+	protected function storeState($state, $attr) {
         $attr["id"] = $state;
         $DB->insert_record("auth_oauth_state", $attr);
     }
 
-    protected function loadState($state) {
+    /**
+ 	 * loads the state attributes for a given state string.
+ 	 *
+ 	 * @param string $state - the state string as used by the authorization service
+ 	 * @return void
+	 */
+	protected function loadState($state) {
         // loads the state Object
         global $DB;
 
@@ -170,7 +199,14 @@ trait OAuthPlugin {
         return (array)$stateObj;
     }
 
-    protected function generateToken($attr, $expires = 0) {
+    /**
+ 	 * generates and inserts a token for the preseted attributes
+ 	 *
+ 	 * @param array $attributes
+     * @param int $expires - expiration timestamp, until when the token is valid
+ 	 * @return void
+	 */
+	protected function generateToken($attr, $expires = 0) {
         global $DB;
         $ts = time();
 
@@ -198,13 +234,46 @@ trait OAuthPlugin {
         return [$attr["access_token"], $attr["refresh_token"], $expires];
     }
 
+    /**
+ 	 * fetches the token information for the presented token
+ 	 *
+ 	 * @param string $field - either 'access_token' or 'refresh_token'
+     * @param string $token - the presented token
+ 	 * @return void
+	 */
+	protected function getToken($field, $token) {
+        global $DB;
 
-    protected function storeToken($aT, $rT, $ex) {
+        $attrMap = [];
+        $attrMap[$field] = $token;
+        if($recToken = $DB->get_record("auth_oauth_tokens", $attrMap)) {
+            return (array)$recToken;
+        }
+
+        $attrMap = [];
+        $attrMap["initial_$field"] = $token;
+        if($recToken = $DB->get_record("auth_oauth_tokens", $attrMap)) {
+            return (array)$recToken;
+        }
+        throw new \RESTling\Exception\Forbidden();
+    }
+
+    /**
+ 	 * stores a new token.
+     * This function automatically decides whether to create or update
+     * the token information based on the present state of the request
+ 	 *
+ 	 * @param string $access_token
+     * @param string $refresh_token
+     * @param int $ttl - seconds from now until the token expires.
+ 	 * @return void
+	 */
+	protected function storeToken($aT, $rT, $ttl) {
         global $DB;
         global $USER;
 
         $ts = time();
-        $ex = $ts + $ex;
+        $ex = $ts + $ttl;
         if (!empty($this->stateInfo)) { // avoid random errors
             $azpId  = $this->stateInfo["azp_id"];
             $tokenId = $this->stateInfo["token_id"];
@@ -237,7 +306,15 @@ trait OAuthPlugin {
         }
     }
 
-    protected function getTokenUrl($state) {
+    /**
+ 	 * returns the tokenUrl for a given state.
+     *
+     * This is used for the Code Flow.
+ 	 *
+ 	 * @param string $state
+ 	 * @return string $tokenUrl
+	 */
+	protected function getTokenUrl($state) {
         global $DB;
 
         $stateObj = $DB->get_record("auth_oauth_state", ["id" => $state]);
