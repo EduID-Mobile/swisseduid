@@ -44,7 +44,6 @@ class auth_plugin_oauth2 extends auth_plugin_base {
     public function validate_form($config, &$err) {
         $this->perspective = "config";
         $config = (array) $config;
-        error_log(">> " . json_encode($config));
 
         if (array_key_exists("azp", $config)) {
             $this->perspective = "azp";
