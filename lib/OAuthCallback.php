@@ -111,39 +111,27 @@ class OAuthCallback {
     public function authorizeAssertion() {
         global $CFG;
 
-        if (array_key_exists("aud", $_GET))
-        {
-            $uri = dirname($_GET["aud"]); // strip the token endpoint
-            if (!($target = $this->manager->findByUrl($uri))) {
-                http_response_code(403);
-                return;
-            }
-
-            $param = [];
-            foreach ($_GET as $k => $v) {
-                $param[$k] = $v;
-            }
-
-            $param["scope"] = "openid profile email";
-
-            $res = $this->callTokenEndpoint($uri, $param);
-
-            if (!$this->handleToken($res)) {
-                http_response_code(403);
-            }
+        $param = [];
+        foreach ($_GET as $k => $v) {
+            $param[$k] = $v;
         }
-        else {
-            http_response_code(400);
+
+        $param["scope"] = "openid profile email";
+
+        $res = $this->callTokenEndpoint($uri, $param);
+
+        if (!$this->handleToken($res)) {
+            http_response_code(403);
         }
     }
 
     private function loadCodeAuthorization() {
         $target = $this->manager->get();
         $param = [
-            "grant_type" => "authorization_code",
-            "client_id"  => $target->client_id,
+            "grant_type"   => "authorization_code",
+            "client_id"    => $target->client_id,
             "redirect_uri" => $this->myuri,
-            "code" => $_GET["code"]
+            "code"         => $_GET["code"]
         ];
         return $this->callTokenEndpoint($param);
     }

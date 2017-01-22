@@ -27,18 +27,14 @@ elseif (array_key_exists("state", $_GET)) {
     // response from the authorization endpoint
     $callback->authorizeUser();
 }
-elseif (array_key_exists("assertion", $_GET)) {
-    // used by an trust agent.
-    // contains three keys:
-    // -- assertion
-    // -- aud -> which AP to send the assertion to
-    // -- grant_type -> which grant type to use
-    $callback->authorizeAssertion();
-}
 elseif (array_key_exists("error", $_GET)) {
-    // we may want to handle the assertion
     http_response_code(403);
     exit;
+}
+else {
+    // this one handles the assertion (an any future extension)
+    // by passing ALL parameters to the AP token endpoint
+    $callback->authorizeAssertion();
 }
 
 // ensure that moodle is not kicking in
