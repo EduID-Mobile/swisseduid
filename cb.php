@@ -1,0 +1,46 @@
+<?php
+
+// init moodle
+require_once "../../config.php";
+// load our function
+require_once __DIR__ . "/lib/OAuthCallback.php";
+
+// we have no work on our own
+$callback = new OAuthCallback();
+
+if (!$callback->isActive()) {
+    http_response_code(503);
+    exit;
+}
+
+if (empty($_GET)) {
+    http_response_code(403);
+    exit;
+}
+
+if (array_key_exists("id", $_GET)) {
+    // normal use when the user comes via the login page
+    // triggers the authorization request
+    $callback->handleAuthorization();
+}
+elseif (array_key_exists("state", $_GET)) {
+    // response from the authorization endpoint
+    $callback->authorizeUser();
+}
+elseif (array_key_exists("assertion", $_GET)) {
+    // used by an trust agent.
+    // contains three keys:
+    // -- assertion
+    // -- aud -> which AP to send the assertion to
+    // -- grant_type -> which grant type to use
+    $callback->authorizeAssertion();
+}
+elseif (array_key_exists("error", $_GET)) {
+    // we may want to handle the assertion
+    http_response_code(403);
+    exit;
+}
+
+// ensure that moodle is not kicking in
+exit;
+?>

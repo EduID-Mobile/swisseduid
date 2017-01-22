@@ -183,12 +183,12 @@ class auth_plugin_oauth2 extends auth_plugin_base {
 
         $idps = $DB->get_records("auth_oauth_azp");
 
-        $myurl = $CFG->wwwroot . "/local/tla/service.php/identity/oauth2/id";
+        $myurl = $CFG->wwwroot . "/auth/oauth2/cb.php";
 
         foreach ($idps as $idp) {
             $retval[] = [
                 "icon" => pix_icon("oauth.png", $idp->name, $component),
-                "url"  => moodle_url($myurl,["idp" => $idp->id]),
+                "url"  => moodle_url($myurl,["id" => $idp->id]),
                 "name" => $idp->name
             ];
         }
