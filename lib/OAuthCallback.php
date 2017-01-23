@@ -284,7 +284,7 @@ class OAuthCallback {
     private function decryptJWE($jwt) {
         $pk = $this->manager->getPrivateKey();
         if ($pk && $jwt instanceof \Jose\Object\JWE) {
-            $jwk_set = $this->prepareKeySet($pk, ["use"=>"enc"]);
+            $jwk_set = $this->prepareKeySet($pk->crypt_key, ["use"=>"enc"]);
 
             $alg = $jwt->getSignature(0)->getProtectedHeader('alg');
             $enc = $jwt->getSignature(0)->getProtectedHeader('enc');
