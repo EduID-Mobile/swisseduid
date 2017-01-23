@@ -228,6 +228,8 @@ class OAuthManager {
     }
 
     public function createState($info) {
+        global $DB;
+
         if (!$this->azp) {
             return null;
         }
@@ -239,8 +241,10 @@ class OAuthManager {
         ];
 
         if (!empty($info)) {
-            foreach (["token", "token_id", "refresh_id", "redirect_uri"] as $k) {
-                $attr[$k] = $info[$k];
+            foreach (["refresh_id", "redirect_uri"] as $k) {
+                if (array_key_exists($k, $info)) {
+                    $attr[$k] = $info[$k];
+                }
             }
         }
         $DB->insert_record("auth_oauth_state", $attr);
