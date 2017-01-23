@@ -26,14 +26,6 @@ Settings-Plugins-Authentication-Manage Authentication named "Swiss edu-ID auth".
 
 This plugin requires [MoodleTLA](https://github.com/phish108/moodle_tla) to be installed, as it uses the TLA service layer. 
 
-Usage
------
-Use the get_service_access.php to generate a moodle access token.
-The accepted parameters are grant_type and authorization_code.
-
-Use the get_app_token.php to generate the webservice token.
-The accepted parameters are access_token and service_shortname.
-
 History
 -------
 
