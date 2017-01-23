@@ -236,7 +236,7 @@ class OAuthManager {
 
         // create random string using moodle's random string function
         $attr = [
-            "id" => random_string(15),
+            "state" => random_string(15),
             "azp_id" => $this->azp
         ];
 
@@ -247,6 +247,8 @@ class OAuthManager {
                 }
             }
         }
+
+        error_log(json_encode($attr));
         $DB->insert_record("auth_oauth_state", $attr);
 
         return $attr["id"];
@@ -255,14 +257,14 @@ class OAuthManager {
     public function getState($state) {
         global $DB;
 
-        $rec = $DB->get_record("auth_oauth_state", ["id" => $state]);
+        $rec = $DB->get_record("auth_oauth_state", ["state" => $state]);
         $this->azp = $rec->azp_id;
         return $rec;
     }
 
     public function consumeState($state) {
         global $DB;
-        $DB->delete_records("auth_oauth_state", ["id" => $state]);
+        $DB->delete_records("auth_oauth_state", ["state" => $state]);
     }
 
     public function getMapping() {

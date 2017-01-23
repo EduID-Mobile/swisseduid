@@ -15,6 +15,6 @@
 // along with Moodbile.  If not, see <http://www.gnu.org/licenses/>.
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2016062700;
+$plugin->version = 2017012304;
 $plugin->requires  = 2011112900;
-$plugin->component = 'auth_oauth2';  
+$plugin->component = 'auth_oauth2';
