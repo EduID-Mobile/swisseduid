@@ -3,6 +3,7 @@
 if (!defined('MOODLE_INTERNAL')) {
     die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
 }
+require_once(__DIR__ . '/vendor/autoload.php');
 
 require_once($CFG->libdir.'/authlib.php');
 require_once(__DIR__ . '/lib/OAuthManager.php');
@@ -102,6 +103,7 @@ class auth_plugin_oauth2 extends auth_plugin_base {
                 if ($this->manager) {
                     try {
                         $PK = $this->manager->getPrivateKey();
+                        $pubKey = $this->manager->getPublicJWK();
                     }
                     catch (Exception $err) {
                         $PK = null;
@@ -120,6 +122,7 @@ class auth_plugin_oauth2 extends auth_plugin_base {
      */
     function process_config($config) {
         $config = (array) $config;
+
         if (array_key_exists("storekey", $config) && isset($config["storekey"])) {
             $changes = [];
             foreach (["kid", "jku", "crypt_key", "azp", "keyid"] as $attr) {
@@ -152,7 +155,7 @@ class auth_plugin_oauth2 extends auth_plugin_base {
             $this->manager->store($changes);
             //return false;
         }
-        elseif (array_key_exists("pk", $config) && !empty($conifg["pk"])) {
+        elseif (array_key_exists("pk", $config) && !empty($config["pk"])) {
             $this->manager->setPrivateKey($config["pk"]);
             //return false;
         }

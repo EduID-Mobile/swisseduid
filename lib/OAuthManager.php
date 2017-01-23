@@ -4,6 +4,9 @@
  * OAuthManager is used by the auth.php for configuring the
  * plugin.
  */
+
+use \Jose\Factory\JWKFactory;
+
 class OAuthManager {
     private $azp;
     private $info;
@@ -329,5 +332,13 @@ class OAuthManager {
             return (array) $retval;
         }
         return null;
+    }
+
+    public function getPublicJWK() {
+        $pk = $this->getPrivateKey();
+        $key = JWKFactory::createFromKey($pk->crypt_key,
+                                         null,
+                                         ["use"=>"enc"]);
+        return json_encode($key->toPublic());
     }
 }
