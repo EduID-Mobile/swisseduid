@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="auth/eduid/db" VERSION="20160627" COMMENT="XMLDB file for Moodle auth/eduid" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+<XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="auth/eduid/db" VERSION="20170123" COMMENT="XMLDB file for Moodle auth/eduid" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
 <TABLES>
     <TABLE NAME="auth_oauth_state" COMMENT="The OAuth State allows moodle to track the kind of authorization that is in process.">
       <FIELDS>
         <FIELD NAME="id" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="token" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The assertion token before the primary token. ONLY used by Trust Agents, NULL otherwise."/>
-        <FIELD NAME="token_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the tokenid for the issuing secondary token (NULL if primary)."/>
         <FIELD NAME="refresh_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the tokenid to be refreshed (NULL if not refreshing)"/>
         <FIELD NAME="azp_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the authorization service this state is used with."/>
         <FIELD NAME="redirect_uri" TYPE="char" LENGTH="1000" NOTNULL="false" SEQUENCE="false" COMMENT="used for web frontend"/>
