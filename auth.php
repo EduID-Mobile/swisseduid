@@ -190,8 +190,8 @@ class auth_plugin_oauth2 extends auth_plugin_base {
 
         foreach ($idps as $idp) {
             $retval[] = [
-                "icon" => pix_icon("oauth.png", $idp->name, $component),
-                "url"  => moodle_url($myurl,["id" => $idp->id]),
+                "icon" => new pix_icon("oauth.png", $idp->name),
+                "url"  => new moodle_url($myurl,["id" => $idp->id]),
                 "name" => $idp->name
             ];
         }
