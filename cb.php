@@ -1,7 +1,8 @@
 <?php
 
 // init moodle
-require_once "../../config.php";
+// require_once "../../config.php";
+require_once "/var/www/html/moodle/config.php";
 // load our function
 require_once __DIR__ . "/lib/OAuthCallback.php";
 
