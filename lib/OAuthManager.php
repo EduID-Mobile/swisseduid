@@ -20,6 +20,15 @@ class OAuthManager {
         }
     }
 
+    public function aud() {
+        return $CFG->wwwroot ."/auth/oauth2/cb.php";
+    }
+
+    public function findById($id) {
+        $this->azp = $id;
+        return $this->get();
+    }
+
     public function findByUrl($url) {
         global $DB;
         if (!empty($url)) {
@@ -137,19 +146,6 @@ class OAuthManager {
         }
     }
 
-    public function getMapping() {
-        if ($rec = $this->get() && !empty($rec->attr_map)) {
-            try {
-                $mapping = json_decode($rec->attr_map, true);
-            }
-            catch (Exception $err) {
-                return [];
-            }
-            return $mapping;
-        }
-        return [];
-    }
-
     public function deactivate() {
         global $DB;
         if ($this->azp > 0) {
@@ -173,6 +169,23 @@ class OAuthManager {
     public function getKey($keyid) {
         global $DB;
         return $DB->get_record("auth_oauth_keys", ["azp_id" => $this->azp, "id" => $keyid]);
+    }
+
+    public function getValidationKey($kid, $jku) {
+        global $DB;
+        if (empty($kid) && empty($jku)) {
+            return null;
+        }
+        $attr = ["kid" => $kid, "jku" => $jku];
+        if (empty($kid)) {
+            $attr["kid"] = null;
+        }
+        if (empty($jku)) {
+            $attr["jku"] = null;
+        }
+        $keyset = $DB->get_record("auth_oauth_keys", $attr);
+        $this->azp = $keyset->azp_id;
+        return $keyset;
     }
 
     public function storeKey($keyInfo) {
@@ -211,6 +224,53 @@ class OAuthManager {
         $DB->delete_records("auth_oauth_keys", ["id" => $id, "azp_id" => $this->azp_id]);
     }
 
+    public function createState($info) {
+        if (!$this->azp) {
+            return null;
+        }
+
+        // create random string using moodle's random string function
+        $attr = [
+            "id" => random_string(15),
+            "azp_id" => $this->azp
+        ];
+
+        if (!empty($info)) {
+            foreach (["token", "token_id", "refresh_id", "redirect_uri"] as $k) {
+                $attr[$k] = $info[$k];
+            }
+        }
+        $DB->insert_record("auth_oauth_state", $attr);
+
+        return $attr["id"];
+    }
+
+    public function getState($state) {
+        global $DB;
+
+        $rec = $DB->get_record("auth_oauth_state", ["id" => $state]);
+        $this->azp = $rec->azp_id;
+        return $rec;
+    }
+
+    public function consumeState($state) {
+        global $DB;
+        $DB->delete_records("auth_oauth_state", ["id" => $state]);
+    }
+
+    public function getMapping() {
+        if ($rec = $this->get() && !empty($rec->attr_map)) {
+            try {
+                $mapping = json_decode($rec->attr_map, true);
+            }
+            catch (Exception $err) {
+                return $this->getDefaultMapping();
+            }
+            return $mapping;
+        }
+        return $this->getDefaultMapping();
+    }
+
     public function getDefaultMapping() {
         return [
             "email" => "email",
@@ -236,5 +296,38 @@ class OAuthManager {
             "lastnamephonetic" => "",
             "alternatename" => "nickname"
         ];
+    }
+
+    public function storeToken($token) {
+        global $DB;
+        $funcname = "update_record";
+        if (!array_key_exists("id", $token)) {
+            $token["initial_access_token"] = $token["access_token"];
+            $token["initial_refresh_token"] = $token["refresh_token"];
+            $funcname = "insert_record";
+        }
+
+        $DB->$funcname("auth_oauth_tokens", $token);
+    }
+
+    public function getTokenById($tokenId) {
+        global $DB;
+        $retval = $DB->get_record("auth_oauth_tokens", ["id"=>$tokenId]);
+        if ($retval) {
+            return (array) $retval;
+        }
+        return null;
+    }
+
+    public function getToken($token, $type) {
+        global $DB;
+        $attr = [
+            $type => $token
+        ];
+        $retval = $DB->get_record("auth_oauth_tokens", $attr);
+        if ($retval) {
+            return (array) $retval;
+        }
+        return null;
     }
 }
