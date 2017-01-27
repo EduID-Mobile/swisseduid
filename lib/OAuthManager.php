@@ -248,10 +248,9 @@ class OAuthManager {
             }
         }
 
-        error_log(json_encode($attr));
         $DB->insert_record("auth_oauth_state", $attr);
 
-        return $attr["id"];
+        return $attr["state"];
     }
 
     public function getState($state) {
