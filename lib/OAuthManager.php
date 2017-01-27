@@ -50,7 +50,6 @@ class OAuthManager {
         $keyinfo = $DB->get_record("auth_oauth_keys", [
             "kid" => "private",
             "azp_id" => $this->azp,
-            "token_id"  => null,
             "jku"    => null
         ]);
 
@@ -117,7 +116,7 @@ class OAuthManager {
             }
         }
         foreach ( array_keys($info) as $attr) {
-            if (!in_array($attr, ["name", "url", "client_id", "flow", "auth_type", "credentials", "iss"])) {
+            if (!in_array($attr, ["name", "url", "client_id", "flow", "auth_type", "credentials", "issuer", "authorization_endpoint", "token_endpoint", "revocation_endpoint", "end_session_endpoint", "registration_endpoint", "introspection_endpoint", "jwks_uri"])) {
                 unset($info[$attr]);
             }
         }
@@ -132,7 +131,8 @@ class OAuthManager {
                 $info["attr_map"] = $this->getDefaultMapping();
             }
 
-            $DB->insert_record("auth_oauth_azp", $info);
+            $id = $DB->insert_record("auth_oauth_azp", $info);
+            $this->azp = $id;
         }
     }
 
@@ -189,6 +189,34 @@ class OAuthManager {
         $keyset = $DB->get_record("auth_oauth_keys", $attr);
         $this->azp = $keyset->azp_id;
         return $keyset;
+    }
+
+    public function updateKeySet($url) {
+        $curl = new Curler\Request($url);
+        $curl->get();
+        if ($curl->getStatus() == 200) {
+            $process = true;
+            try {
+                $keys = json_decode($curl->getBody(), true);
+            }
+            catch (Exception $err) {
+                $process = false;
+            }
+            if ($process &&
+                !empty($keys) &&
+                array_key_exists('keys', $keys) &&
+                !empty($keys["keys"])) {
+
+                foreach ($keys["keys"] as $k) {
+                    $attr = [];
+                    $attr["kid"] = $k["kid"];
+                    $attr["jku"] = $url;
+                    $attr["crypt_key"] = json_encode($k);
+
+                    $this->storeKey($attr);
+                }
+            }
+        }
     }
 
     public function storeKey($keyInfo) {

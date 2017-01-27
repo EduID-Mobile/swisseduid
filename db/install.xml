@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="auth/eduid/db" VERSION="20170126" COMMENT="XMLDB file for Moodle auth/eduid" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+<XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" PATH="auth/eduid/db" VERSION="20170127" COMMENT="XMLDB file for Moodle auth/eduid" xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
 <TABLES>
     <TABLE NAME="auth_oauth_state" COMMENT="The OAuth State allows moodle to track the kind of authorization that is in process.">
       <FIELDS>
@@ -18,7 +18,14 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="url" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="iss" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="String used by the authority to identify itself"/>
+        <FIELD NAME="authorization_endpoint" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="token_endpoint" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="revocation_endpoint" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="end_session_endpoint" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="registration_endpoint" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="introspection_endpoint" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="jwks_uri" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="issuer" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="String used by the authority to identify itself"/>
         <FIELD NAME="client_id" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="flow" TYPE="char" LENGTH="20"  NOTNULL="true" SEQUENCE="false" COMMENT="code, implicit, hybrid, or assertion"/>
         <FIELD NAME="auth_type" TYPE="char" LENGTH="1000" NOTNULL="true" SEQUENCE="false" COMMENT="which moodle authorization type to use (e.g shibboleth if different auth methods are allowed)"/>
@@ -37,7 +44,6 @@
         <FIELD NAME="jku" TYPE="char" LENGTH="1000" NOTNULL="false"  SEQUENCE="false"/>
         <FIELD NAME="crypt_key" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="azp_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="token_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Only used for trust agents"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

@@ -4,13 +4,13 @@
             Your OAuth2 redirect_uri is <pre><?php echo "$tlaurl/cb"; ?></pre>
     </p>
         <p><label for="name">Authority's Display Name</label><input id="name" name="name" type="text" placeholder="Authority Name" value="<?php echo $azpInfo->name; ?>"></p>
-        <p><label for="iss">Issuer Id (as provided by the Authority)</label><input id="iss" name="iss" type="text" placeholder="Issuer Value " value="<?php echo $azpInfo->iss; ?>"></p>
+        <p><label for="iss">Issuer Id (as provided by the Authority)</label><input id="issuer" name="issuer" type="text" placeholder="Issuer Value " value="<?php echo $azpInfo->issuer; ?>"></p>
         <p><label for="client_id">client_id (as provided by the authority)</label><input id="client_id" name="client_id" type="text" placeholder="client_id (as provided by the authority)" value="<?php echo $azpInfo->client_id; ?>"></p>
         <p><label for="url">authority OAuth2 Base Url</label><input id="url" name="url" type="text" placeholder="authority OAuth2 Url" value="<?php echo $azpInfo->url; ?>"></p>
         <p><label for="auth_type">moodle auth type (optional)</label><input id="auth_type" name="auth_type" type="text" placeholder="moodle auth type" value="<?php echo $azpInfo->auth_type?>"></p>
         <p> <label for="flow">OAuth2/OpenID Connect Flow Type</label>
             <select id="flow" name="flow">
-                <option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected';?>>Code</option>
+                <option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected';?>">Code</option>
                 <option value="implict" <?php if ($azpInfo->flow === "implicit") echo 'selected="selected';?>>Implicit</option>
                 <option value="hybrid" <?php if ($azpInfo->flow === "hybrid") echo 'selected="selected"';?>>Hybrid</option>
                 <option value="assertion" <?php if ($azpInfo->flow === "assertion") echo 'selected="selected"';?>>Assertion</option>

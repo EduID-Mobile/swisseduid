@@ -367,9 +367,20 @@ class OAuthCallback {
     }
 
     private function prepareKeySet($keyString, $keyAttr) {
-        $key = \Jose\Factory\JWKFactory::createFromKey($keyString,
-                                                       null,
-                                                       $keyAttr);
+        try {
+            $keyObj = json_decode($keyString, true);
+            $key = \Jose\Object\JWK($keyObj);
+        }
+        catch (Exception $err) {
+            try {
+                $key = \Jose\Factory\JWKFactory::createFromKey($keyString,
+                                                               null,
+                                                               $keyAttr);
+            }
+            catch (Exception $err) {
+                return null;
+            }
+        }
         if (!$key) {
             return null;
         }

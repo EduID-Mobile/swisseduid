@@ -146,18 +146,44 @@ class auth_plugin_oauth2 extends auth_plugin_base {
         }
         elseif ((array_key_exists("storeazp", $config) && isset($config["storeazp"])) || (array_key_exists("client_id", $config) && !empty($config["client_id"]))) {
             $changes = [];
-            foreach (["name", "url", "client_id", "flow", "auth_type", "credentials", "iss"] as $attr) {
+            foreach (["name", "url", "client_id", "flow", "auth_type", "credentials", "issuer"] as $attr) {
                 if (array_key_exists($attr, $config) && !empty($config[$attr])) {
                     $changes[$attr] = $config[$attr];
                 }
             }
 
+            // find the rest of the configuration
+            if (array_key_exists("url", $changes)) {
+                $curl = new Curler\Request($changes["url"]);
+                $curl->setPathInfo(".well-known/openid-configuration"); // <- this is fixed
+                $curl->get();
+                if ($curl->getStatus() == 200) {
+                    $process = true;
+                    try {
+                        $srvConfig = json_decode($curl->getBody(), true);
+                    }
+                    catch (Exception $err) {
+                        $process = false;
+                    }
+                    if ($process && !empty($srvConfig)) {
+                        foreach (["authorization_endpoint", "token_endpoint", "revocation_endpoint", "end_session_endpoint", "registration_endpoint", "introspection_endpoint", "jwks_uri", "issuer"] as $attr) {
+                            if (array_key_exists($attr, $srvConfig) && !empty($srvConfig[$attr])) {
+
+                                $changes[$attr] = $srvConfig[$attr];
+                            }
+                        }
+                    }
+                }
+            }
+
             $this->manager->store($changes);
-            //return false;
+
+            if (array_key_exists("jwks_uri", $changes) && !empty($changes["jwks_uri"])) {
+                $this->manager->updateKeySet($changes["jwks_uri"]);
+            }
         }
         elseif (array_key_exists("pk", $config) && !empty($config["pk"])) {
             $this->manager->setPrivateKey($config["pk"]);
-            //return false;
         }
 
 		return false; // moodle never handles the configuration
