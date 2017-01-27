@@ -47,9 +47,15 @@ class OAuthManager {
 
     public function getPrivateKey() {
         global $DB;
+
+        // $keyinfo = $DB->get_record("auth_oauth_keys", [
+        //     "kid" => "private",
+        //     "azp_id" => $this->azp,
+        //     "jku"    => null
+        // ]);
         $keyinfo = $DB->get_record("auth_oauth_keys", [
             "kid" => "private",
-            "azp_id" => $this->azp,
+            "azp_id" => null,
             "jku"    => null
         ]);
 
@@ -184,10 +190,15 @@ class OAuthManager {
             $attr["kid"] = null;
         }
         if (empty($jku)) {
-            $attr["jku"] = null;
+             unset($attr["jku"]);
         }
         $keyset = $DB->get_record("auth_oauth_keys", $attr);
-        $this->azp = $keyset->azp_id;
+        if ($keyset) {
+            $this->azp = $keyset->azp_id;
+        }
+        else {
+             error_log("key not found for " . json_encode($attr));
+        }
         return $keyset;
     }
 

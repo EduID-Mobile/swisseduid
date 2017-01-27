@@ -88,7 +88,7 @@ class OAuthCallback {
         foreach ($opts as $k => $v) {
             $param[] = urlencode($k)."=".urlencode($v);
         }
-        redirect($target->url . "?" . join("&", $param));
+        redirect($target->authorization_endpoint . "?" . join("&", $param));
     }
 
     public function authorizeUser() {
@@ -138,24 +138,27 @@ class OAuthCallback {
 
     private function callTokenEndpoint($param) {
         $target = $this->manager->get();
-        $curl = new Curler($target->url);
-        $curl->setPathInfo("token");
-        // we expect formdata
-        $p = [];
-        foreach ($param as $k => $v) {
-            $p[] = urlencode($k) . '=' . urlencode($v);
-        }
+        $curl = new Curler($target->token_endpoint);
+        $curl->setCredentials($target->client_id, $target->credentials);
+        unset($param["client_id"]); // because the client id is in the header already
+        // $param["client_secret"] = $target->credentials;
 
-        $curl->post(join('&', $p), "application/x-www-form-urlencoded");
+        error_log(json_encode($param));
 
-        if ($curl->getSatus() == 200) {
+        $curl->post($param, "application/x-www-form-urlencoded");
+        // $curl->post(json_encode($p), "application/json");
+        $result = null;
+
+        error_log($curl->getStatus());
+
+        if ($curl->getStatus() == 200) {
             $h = $curl->getHeader();
             $ct = $h["content_type"];
 
             // OIDC returns JSON
             if (strpos($ct, "application/json") !== false) {
                 try {
-                    $result = json_decode($curl->getBody, true);
+                    $result = json_decode($curl->getBody(), true);
                 }
                 catch (Exception $err) {
                     $result = null;
@@ -163,6 +166,9 @@ class OAuthCallback {
             }
             // other OAuth2 APs MAY return other formats?
             // parse_str($curl->getBody(), $result);
+        }
+        else {
+            error_log($curl->getBody());
         }
 
         if (!$result || array_key_exists("error", $result)) {
@@ -179,8 +185,12 @@ class OAuthCallback {
 
         $id_token      = $response["id_token"];
         $access_token  = $response["access_token"];
-        $refresh_token = $response["refresh_token"];
-        $expires       = $response["expires_in"];
+        if (array_key_exists("refresh_token", $response)) {
+            $refresh_token = $response["refresh_token"];
+        }
+        if (array_key_exists("expires_in", $response)) {
+            $expires       = $response["expires_in"];
+        }
 
         if (empty($id_token)) {
             return false;
@@ -263,17 +273,24 @@ class OAuthCallback {
     }
 
     private function processAssertion($jwt) {
+        $loader = new \Jose\Loader();
+        $jwt = $loader->load($jwt);
+
         if (!($jwt = $this->decryptJWE($jwt))) {
+            error_log( "invalid encryption");
             return null;
         }
         if (!($jwt = $this->validateJWT($jwt))) {
+            error_log("invalid signature");
             return null;
         }
+
+        error_log(json_encode($jwt->getPayload()));
 
         $idClaims = self::getSupportedClaims();
         $userClaims = [];
         foreach ($idClaims as $claim) {
-            if ($cdata = $jwt->getClaim($claim)) {
+            if ($jwt->hasClaim($claim) && $cdata = $jwt->getClaim($claim)) {
                 $userClaims[$claim] = $cdata;
             }
         }
@@ -314,54 +331,74 @@ class OAuthCallback {
                 return null;
             }
 
-            if (is_array($payload) && array_key_exists('signatures', $payload)) {
-                $jwt = \Jose\Util\JWSLoader::loadSerializedJsonJWS($payload);
-                if (!$jwt || !($jwt instanceof \Jose\Object\JWS)) {
-                    return null;
-                }
-            }
-            else {
-                return null;
-            }
+            $loader = new \Jose\Loader();
+            $jwt = $loader->load($payload);
+            // if (!is_array($payload) || !array_key_exists('signatures', $payload)) {
         }
+
+        if (!$jwt || !($jwt instanceof \Jose\Object\JWS)) {
+            return null;
+        }
+
         return $jwt;
     }
 
     private function validateJWT($jwt) {
-        if ($jwt instanceof \Jose\Object\JWS) {
+        if (is_string($jwt)) {
+            // obviously not processed yet.
+            $jwt = \Jose\Util\JWSLoader::loadSerializedJsonJWS($jwt);
+        }
+        if (!($jwt instanceof \Jose\Object\JWS)) {
+            error_log("not a JWS");
+            return null;
+        }
+
+        $kid = null;
+        $jku = null;
+
+        if ($jwt->getSignature(0)->hasProtectedHeader("kid")) {
             $kid = $jwt->getSignature(0)->getProtectedHeader('kid');
+        }
+        if ($jwt->getSignature(0)->hasProtectedHeader("jku")) {
             $jku = $jwt->getSignature(0)->getProtectedHeader('jku');
-            $alg = $jwt->getSignature(0)->getProtectedHeader('alg');
+        }
+        $alg = $jwt->getSignature(0)->getProtectedHeader('alg');
 
-            if (empty($alg)) {
-                return null;
-            }
+        if (empty($alg)) {
+            return null;
+        }
 
-            $key = $this->manager->getValidationKey($kid, $jku);
-            if (!$key) {
-                return null;
-            }
+        $key = $this->manager->getValidationKey($kid, $jku);
+        if (!$key) {
+            error_log("no key found");
+            return null;
+        }
 
-            $jwk_set = $this->prepareKeySet($key->crypt_key, ["use"=>"sig"]);
-            $verifier = \Jose\Verifier::createVerifier([$alg]);
-            try {
-                $verifier->verifyWithKeySet($jwt, $jwk_set, null, null);
-            }
-            catch (Exception $err) {
-                return null;
-            }
+        $jwk_set = $this->prepareKeySet($key->crypt_key, ["use"=>"sig"]);
 
-            $azp = $this->manager->get();
-            $iss = $jwt->getClaim('iss');
+        error_log(json_encode($jwk_set));
 
-            if (empty($iss) || $iss !== $azp->iss) {
-                return null;
-            }
+        $verifier = \Jose\Verifier::createVerifier([$alg]);
+        try {
+            $verifier->verifyWithKeySet($jwt, $jwk_set);
+        }
+        catch (Exception $err) {
+            return null;
+        }
 
-            $aud = $jwt->getClaim('aud');
-            if (empty($aud) || $aud !== $this->myuri) {
-                return null;
-            }
+        $azp = $this->manager->get();
+        $iss = $jwt->getClaim('iss');
+
+        error_log($iss . " " . $azp->issuer);
+
+        if (empty($iss) || $iss != $azp->issuer) {
+            return null;
+        }
+
+        $aud = $jwt->getClaim('aud');
+
+        if (empty($aud) || $aud !== $azp->client_id) {
+            return null;
         }
         return $jwt;
     }
@@ -369,7 +406,7 @@ class OAuthCallback {
     private function prepareKeySet($keyString, $keyAttr) {
         try {
             $keyObj = json_decode($keyString, true);
-            $key = \Jose\Object\JWK($keyObj);
+            $key = new \Jose\Object\JWK($keyObj);
         }
         catch (Exception $err) {
             try {
@@ -431,7 +468,7 @@ class OAuthCallback {
                 $user = $DB->get_record('user', array('id' => $user['id']));
 
                 // allow Moodle components to respond to the new user.
-                core\event\user_created::create_from_userid($usernew->id)->trigger();
+                core\event\user_created::create_from_userid($user->id)->trigger();
 
             }
         }
@@ -445,7 +482,7 @@ class OAuthCallback {
         $user = (array) $user;
         $claims = (array) $claims;
 
-        if (!array_key_exists(["id", $user])) {
+        if (!array_key_exists("id", $user)) {
             // set the defaults for new users
             $user['timecreated']  = $user['firstaccess'] = $user['lastaccess'] = time();
             $user['confirmed']    = 1;
@@ -467,7 +504,7 @@ class OAuthCallback {
         foreach ($map as $mKey => $cKey) {
             $cs = $claims;
             // this trick is needed for handling the address claim
-            if (strpos(".", $cKey) !== false) {
+            if (strpos($cKey, ".") !== false) {
                 // handle combined claims
                 list($pKey, $cKey) = explode(".", $cKey);
                 if (array_key_exists($pKey, $cs)) {
@@ -530,6 +567,6 @@ class OAuthCallback {
     static public function getSupportedClaims() {
         // by default we support all claims
         return explode(" ",
-            "sub name given_name family_name middle_name nickname preferred_username profile picture website email email_verified gender brithdate zoneinfo locale phone_number phone_number_verified address updated_at formatted");
+            "sub name given_name family_name middle_name nickname preferred_username profile picture website email email_verified gender birthdate zoneinfo locale phone_number phone_number_verified address updated_at formatted");
     }
 }
