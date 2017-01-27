@@ -30,18 +30,9 @@ foreach ($authorities as $azp) {
                 </p>
                 <p><?php echo $pubKey; ?></p>
                 <p><input id="name" name="name" type="text" placeholder="Authority Name"></p>
-                <p><input id="issuer" name="issuer" type="text" placeholder="Issuer Value (as provided by the authority)"></p>
                 <p><input id="client_id" name="client_id" type="text" placeholder="client_id (as provided by the authority)"></p>
                 <p><input id="url" name="url" type="text" placeholder="authory OAuth2 Url"></p>
-                <p><input id="auth_type" name="auth_type" type="text" placeholder="moodle auth type"></p>
-                <p>
-                    <select id="flow" name="flow">
-                        <option value="code">Code</option>
-                        <option value="implict">Implicit</option>
-                        <option value="hybrid">Hybrid</option>
-                        <option value="assertion">Assertion</option>
-                    </select>
-                </p>
+                <input type="hidden" id="flow" name="flow" value="code"/>
         </div>
     </div>
 </div>
