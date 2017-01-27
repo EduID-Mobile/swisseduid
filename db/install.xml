@@ -3,7 +3,7 @@
 <TABLES>
     <TABLE NAME="auth_oauth_state" COMMENT="The OAuth State allows moodle to track the kind of authorization that is in process.">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="255" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="state" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="refresh_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the tokenid to be refreshed (NULL if not refreshing)"/>
         <FIELD NAME="azp_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="the authorization service this state is used with."/>
