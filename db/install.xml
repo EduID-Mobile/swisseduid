@@ -56,11 +56,11 @@
         <FIELD NAME="azp_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="points to the authorization service, that authorized this token"/>
         <FIELD NAME="parent_id" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false" COMMENT="points to the token id that has been used for issuing a secondary token (NULL if not a secondary token)"/>
         <FIELD NAME="access_token" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="refresh_token" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="refresh_token" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="created" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="timestamp when initially created"/>
         <FIELD NAME="expires" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when access_token expires"/>
         <FIELD NAME="initial_access_token" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Keeps the original access token, so a trust agent can revoke a token even after it has expired and has been refreshed"/>
-        <FIELD NAME="initial_refresh_token" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Keeps the original access token, so a trust agent can revoke a token even after it has expired and has been refreshed"/>
+        <FIELD NAME="initial_refresh_token" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Keeps the original access token, so a trust agent can revoke a token even after it has expired and has been refreshed"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
