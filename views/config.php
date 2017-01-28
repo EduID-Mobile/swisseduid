@@ -10,6 +10,9 @@ if (isset($PK)) {
     <div>
         <textarea id="pk" name="pk"></textarea>
     </div>
+    <div>
+        <input type="button" id="gen_key" name="gen_key" value="Generate Private Key"/>
+    </div>
     </div>
     <!-- list of authorities -->
     <div id="authorityList">

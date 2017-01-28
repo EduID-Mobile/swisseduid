@@ -5,7 +5,7 @@
  * plugin.
  */
 
- require_once __DIR__ . "/../lib.php";
+require_once __DIR__ . "/../lib.php";
 
 use \Jose\Factory\JWKFactory;
 
@@ -65,6 +65,12 @@ class OAuthManager {
             throw new Exception("no private key found for azp");
         }
         return $keyinfo;
+    }
+
+    public function generatePrivateKey() {
+        // generates a new private key
+        $key = JWKFactory::createRSAKey(["size" => 4096]);
+        $this->setPrivateKey(json_encode($key));
     }
 
     public function setPrivateKey($key) {
@@ -206,11 +212,11 @@ class OAuthManager {
 
     public function updateKeySet($url) {
         $curl = new Curler\Request($url);
-        $curl->get();
-        if ($curl->getStatus() == 200) {
+        $curl->get()
+             ->success(function($req) {
             $process = true;
             try {
-                $keys = json_decode($curl->getBody(), true);
+                $keys = json_decode($req->getBody(), true);
             }
             catch (Exception $err) {
                 $process = false;
@@ -229,7 +235,7 @@ class OAuthManager {
                     $this->storeKey($attr);
                 }
             }
-        }
+        });  // end success handler
     }
 
     public function storeAuthority($config) {
@@ -245,12 +251,13 @@ class OAuthManager {
         }
         // load the configuration
         $curl = new Curler\Request($changes["url"]);
-        $curl->setPathInfo(".well-known/openid-configuration"); // <- this is fixed
-        $curl->get();
-        if ($curl->getStatus() == 200) {
+        $curl->setPathInfo(".well-known/openid-configuration"); // <- try OIDC discovery
+        $curl->get()
+             ->success(function ($req) {
+
             $process = true;
             try {
-                $srvConfig = json_decode($curl->getBody(), true);
+                $srvConfig = json_decode($req->getBody(), true);
             }
             catch (Exception $err) {
                 $process = false;
@@ -270,10 +277,11 @@ class OAuthManager {
                 $azpData = array_merge($azpData, pick_keys($srvConfig, $attrs));
                 $this->store($azpData);
             }
-            if (array_key_exists("jwks_uri", $azpData) && !empty($azpData["jwks_uri"])) {
+
+            if (has_key($azpData, "jwks_uri")) {
                 $this->updateKeySet($azpData["jwks_uri"]);
             }
-        }
+        }); // end success handler
     }
 
     public function storeMapping($arrMap) {

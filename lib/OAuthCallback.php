@@ -11,6 +11,16 @@ require_once __DIR__ . "/OAuthManager.php";
 
 use \Curler\Request as Curler;
 
+use \Jose\Loader;
+use \Jose\Object\JWE;
+use \Jose\Object\JWS;
+use \Jose\Object\JWK;
+use \Jose\Object\JWKSet;
+use \Jose\Decrypter;
+use \Jose\Verifier;
+use \Jose\Util\JWSLoader;
+use \Jose\Factory\JWKFactory;
+
 class OAuthCallback {
     private $manager;
     private $myuri;
@@ -129,36 +139,29 @@ class OAuthCallback {
         unset($param["client_id"]); // because the client id is in the header already
 
         // $param["client_secret"] = $target->credentials;
-
-        $curl->post($param, "application/x-www-form-urlencoded");
-        // $curl->post(json_encode($p), "application/json");
         $result = null;
 
-        error_log($curl->getStatus());
+        $curl->post($param, "application/x-www-form-urlencoded")
+             ->success(function($req) use (&$result){
 
-        if ($curl->getStatus() == 200) {
-            $h = $curl->getHeader();
+            $h = $req->getHeader();
             $ct = $h["content_type"];
 
             // OIDC returns JSON
             if (strpos($ct, "application/json") !== false) {
                 try {
-                    $result = json_decode($curl->getBody(), true);
+                    $result = json_decode($req->getBody(), true);
                 }
                 catch (Exception $err) {
                     $result = null;
                 }
-            }
-            // other OAuth2 APs MAY return other formats?
-            // parse_str($curl->getBody(), $result);
-        }
-        // else {
-        //     error_log($curl->getBody());
-        // }
 
-        if (!$result || array_key_exists("error", $result)) {
-            return null;
-        }
+                // we should not have this case
+                if (array_key_exists("error", $result)) {
+                    $result = null;
+                }
+            }
+        }); // end success handler
 
         return $result;
     }
@@ -250,7 +253,7 @@ class OAuthCallback {
     }
 
     private function processAssertion($jwt) {
-        $loader = new \Jose\Loader();
+        $loader = new Loader();
         $jwt = $loader->load($jwt);
 
         if (!($jwt = $this->decryptJWE($jwt))) {
@@ -273,7 +276,7 @@ class OAuthCallback {
 
     private function decryptJWE($jwt) {
         $pk = $this->manager->getPrivateKey();
-        if ($pk && $jwt instanceof \Jose\Object\JWE) {
+        if ($pk && $jwt instanceof JWE) {
             $jwk_set = $this->prepareKeySet($pk->crypt_key, ["use"=>"enc"]);
 
             $alg = $jwt->getSignature(0)->getProtectedHeader('alg');
@@ -290,7 +293,7 @@ class OAuthCallback {
                 $zip = [$zip];
             }
 
-            $decrypter = \Jose\Decrypter::createDecrypter([$alg], [$enc],$zip);
+            $decrypter = Decrypter::createDecrypter([$alg], [$enc],$zip);
 
             try {
                 $decrypter->decryptUsingKeySet($jwt, $jwk_set, null);
@@ -304,12 +307,12 @@ class OAuthCallback {
                 return null;
             }
 
-            $loader = new \Jose\Loader();
+            $loader = new Loader();
             $jwt = $loader->load($payload);
             // if (!is_array($payload) || !array_key_exists('signatures', $payload)) {
         }
 
-        if (!$jwt || !($jwt instanceof \Jose\Object\JWS)) {
+        if (!$jwt || !($jwt instanceof JWS)) {
             return null;
         }
 
@@ -319,9 +322,9 @@ class OAuthCallback {
     private function validateJWT($jwt) {
         if (is_string($jwt)) {
             // obviously not processed yet.
-            $jwt = \Jose\Util\JWSLoader::loadSerializedJsonJWS($jwt);
+            $jwt = JWSLoader::loadSerializedJsonJWS($jwt);
         }
-        if (!($jwt instanceof \Jose\Object\JWS)) {
+        if (!($jwt instanceof JWS)) {
             error_log("not a JWS");
             return null;
         }
@@ -351,7 +354,7 @@ class OAuthCallback {
 
         error_log(json_encode($jwk_set));
 
-        $verifier = \Jose\Verifier::createVerifier([$alg]);
+        $verifier = Verifier::createVerifier([$alg]);
         try {
             $verifier->verifyWithKeySet($jwt, $jwk_set);
         }
@@ -382,11 +385,11 @@ class OAuthCallback {
     private function prepareKeySet($keyString, $keyAttr) {
         try {
             $keyObj = json_decode($keyString, true);
-            $key = new \Jose\Object\JWK($keyObj);
+            $key = new JWK($keyObj);
         }
         catch (Exception $err) {
             try {
-                $key = \Jose\Factory\JWKFactory::createFromKey($keyString,
+                $key = JWKFactory::createFromKey($keyString,
                                                                null,
                                                                $keyAttr);
             }
@@ -398,7 +401,7 @@ class OAuthCallback {
             return null;
         }
 
-        $jwk_set = new \Jose\Object\JWKSet();
+        $jwk_set = new JWKSet();
         $jwk_set->addKey($key);
         return $jwk_set;
     }

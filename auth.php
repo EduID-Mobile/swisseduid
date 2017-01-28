@@ -115,7 +115,7 @@ class auth_plugin_oauth2 extends auth_plugin_base {
                 break;
         }
 
-        include __DIR__ . "/" . $file;
+        include __DIR__ . "/views/" . $file;
     }
 
     /**
@@ -126,21 +126,24 @@ class auth_plugin_oauth2 extends auth_plugin_base {
     function process_config($config) {
         $config = (array) $config;
 
-        if (array_key_exists("storekey", $config) && isset($config["storekey"])) {
+        if (has_key($config, "storekey")) {
             $this->manager->storeKey($config);
             //return false;
         }
-        if (array_key_exists("storemap", $config) && isset($config["storemap"])) {
+        if (has_key($config, "storemap")) {
             // handle mapping
 
             $this->manager->storeMapping($config);
             //return false;
         }
-        if ((array_key_exists("url", $config) && !empty($config["url"]))) {
+        if (has_key($config, "url")) {
             $this->manager->storeAuthority($config);
         }
-        if (array_key_exists("pk", $config) && !empty($config["pk"])) {
+        if (has_key($config, "pk")) {
             $this->manager->setPrivateKey($config["pk"]);
+        }
+        if (has_key($config, "gen_key")) {
+            $this->manager->generatePrivateKey();
         }
 
 		return false; // moodle never handles the configuration

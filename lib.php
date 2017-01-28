@@ -25,6 +25,14 @@ function pick_keys($data, $keys) {
     }, ARRAY_FILTER_USE_BOTH);
 }
 
+function has_key($data, $key) {
+    $data = obj2array($data);
+    return (is_string($key) &&
+            strlen($key) &&
+            array_key_exists($key, $data) &&
+            !empty($data[$key]));
+}
+
 function verify_keys($data, $keys, $errMessage="") {
     $keys = str2array($keys);
     $data = obj2array($data);

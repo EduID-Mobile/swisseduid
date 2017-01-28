@@ -10,8 +10,8 @@
         <p><label for="auth_type">moodle auth type (optional)</label><input id="auth_type" name="auth_type" type="text" placeholder="moodle auth type" value="<?php echo $azpInfo->auth_type?>"></p>
         <p> <label for="flow">OAuth2/OpenID Connect Flow Type</label>
             <select id="flow" name="flow">
-                <option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected';?>">Code</option>
-                <option value="implict" <?php if ($azpInfo->flow === "implicit") echo 'selected="selected';?>>Implicit</option>
+                <option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected"';?>>Code</option>
+                <option value="implict" <?php if ($azpInfo->flow === "implicit") echo 'selected="selected"';?>>Implicit</option>
                 <option value="hybrid" <?php if ($azpInfo->flow === "hybrid") echo 'selected="selected"';?>>Hybrid</option>
                 <option value="assertion" <?php if ($azpInfo->flow === "assertion") echo 'selected="selected"';?>>Assertion</option>
             </select>
