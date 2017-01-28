@@ -13,7 +13,7 @@ To install please proceed as follows:
 
  1a. Decompress the eduidauth archive and move the rename the folder to eduidauth.
 
- 1b. You are brave and install directly from github use these commands: 
+ 1b. You are brave and install directly from github use these commands:
 
  ```
  $ git clone git://github.com/BLC-HTWChur/oauth2.git oauth2
@@ -33,7 +33,8 @@ system.
 Once the installation is complete you should have a authentication plugin under
 Settings-Plugins-Authentication-Manage Authentication named "Swiss edu-ID auth".
 
-This plugin requires [MoodleTLA](https://github.com/phish108/moodle_tla) to be installed, as it uses the TLA service layer.
+In order to use this plugin, you must configure a remote authorization service.
+This plugin will try to configure itself as much as possible. 
 
 History
 -------

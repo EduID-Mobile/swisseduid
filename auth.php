@@ -1,9 +1,12 @@
 <?php
 
+
 if (!defined('MOODLE_INTERNAL')) {
     die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
 }
 require_once(__DIR__ . '/vendor/autoload.php');
+
+require_once(__DIR__ . '/lib.php');
 
 require_once($CFG->libdir.'/authlib.php');
 require_once(__DIR__ . '/lib/OAuthManager.php');
@@ -124,84 +127,23 @@ class auth_plugin_oauth2 extends auth_plugin_base {
         $config = (array) $config;
 
         if (array_key_exists("storekey", $config) && isset($config["storekey"])) {
-            $changes = [];
-            foreach (["kid", "jku", "crypt_key", "azp", "keyid"] as $attr) {
-                if (array_key_exists($attr, $config) && !empty($config[$attr])) {
-                    $changes[$attr] = $config[$attr];
-                }
-            }
-
-            $this->manager->storeKey($changes);
+            $this->manager->storeKey($config);
             //return false;
         }
-        elseif (array_key_exists("storemap", $config) && isset($config["storemap"])) {
+        if (array_key_exists("storemap", $config) && isset($config["storemap"])) {
             // handle mapping
-            $mAttr = $this->getUserAttributes();
-            $map = [];
-            foreach ($mAttr as $attr) {
-                $map[$attr] = $config[$attr];
-            }
-            $this->manager->store(["attr_map" => json_encode($map)]);
+
+            $this->manager->storeMapping($config);
             //return false;
         }
-        elseif ((array_key_exists("storeazp", $config) && isset($config["storeazp"])) || (array_key_exists("client_id", $config) && !empty($config["client_id"]))) {
-            $changes = [];
-            foreach (["name", "url", "client_id", "flow", "auth_type", "credentials", "issuer"] as $attr) {
-                if (array_key_exists($attr, $config) && !empty($config[$attr])) {
-                    $changes[$attr] = $config[$attr];
-                }
-            }
-
-            // find the rest of the configuration
-            if (array_key_exists("url", $changes)) {
-                $curl = new Curler\Request($changes["url"]);
-                $curl->setPathInfo(".well-known/openid-configuration"); // <- this is fixed
-                $curl->get();
-                if ($curl->getStatus() == 200) {
-                    $process = true;
-                    try {
-                        $srvConfig = json_decode($curl->getBody(), true);
-                    }
-                    catch (Exception $err) {
-                        $process = false;
-                    }
-                    if ($process && !empty($srvConfig)) {
-                        foreach (["authorization_endpoint", "token_endpoint", "revocation_endpoint", "end_session_endpoint", "registration_endpoint", "introspection_endpoint", "jwks_uri", "issuer"] as $attr) {
-                            if (array_key_exists($attr, $srvConfig) && !empty($srvConfig[$attr])) {
-
-                                $changes[$attr] = $srvConfig[$attr];
-                            }
-                        }
-                    }
-                }
-            }
-
-            $this->manager->store($changes);
-
-            if (array_key_exists("jwks_uri", $changes) && !empty($changes["jwks_uri"])) {
-                $this->manager->updateKeySet($changes["jwks_uri"]);
-            }
+        if ((array_key_exists("url", $config) && !empty($config["url"]))) {
+            $this->manager->storeAuthority($config);
         }
-        elseif (array_key_exists("pk", $config) && !empty($config["pk"])) {
+        if (array_key_exists("pk", $config) && !empty($config["pk"])) {
             $this->manager->setPrivateKey($config["pk"]);
         }
 
 		return false; // moodle never handles the configuration
-    }
-
-    function getUserAttributes() {
-        return array_keys($this->getDefaultMapping());
-    }
-
-    function getStandardClaims() {
-        return [
-            "email", "given_name", "family_name", "middle_name", "nickname",
-            "preferred_username", "profile", "picture", "website",
-            "email_verified", "gender", "birthdate", "zoneinfo", "locale",
-            "phone_number", "phone_number_verified", "updated_at",
-            "address.street_address", "address.city", "address.locality",
-            "address.country", "address.postal_code", "address.region"
-        ];
     }
 
     function loginpage_idp_list($wantsurl) {

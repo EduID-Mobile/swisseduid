@@ -26,17 +26,7 @@ class OAuthCallback {
 
     public function isActive() {
         $authsequence = get_enabled_auth_plugins(true); // auths, in sequence
-        $failed = true;
-        foreach($authsequence as $authname) {
-            if (strstr($authname, "oauth2") === 'oauth2') {
-                $failed = false;
-            }
-        }
-
-        if ($failed) {
-            return false;
-        }
-        return true;
+        return (count(pick_keys($authsequence, "oauth2")) > 0);
     }
 
     public function handleAuthorization() {
@@ -97,10 +87,21 @@ class OAuthCallback {
         if (!($stateInfo = $this->manager->getState($state))) {
             return;
         }
+
         $res = $_GET;
+
         if (!array_key_exists("id_token", $_GET) &&
              array_key_exists("code", $_GET)) {
-            $res = $this->loadCodeAuthorization();
+
+            // we are in code-flow
+            $target = $this->manager->get();
+            $param = [
+                "grant_type"   => "authorization_code",
+                "client_id"    => $target->client_id,
+                "redirect_uri" => $this->myuri,
+                "code"         => $_GET["code"]
+            ];
+            $res = $this->callTokenEndpoint($param);
         }
 
         if (!$this->handleToken($res, $stateInfo)) {
@@ -111,13 +112,7 @@ class OAuthCallback {
     public function authorizeAssertion() {
         global $CFG;
 
-        $param = [];
-        foreach ($_GET as $k => $v) {
-            $param[$k] = $v;
-        }
-
-        $param["scope"] = "openid profile email";
-
+        $param = array_merge($_GET, ["scope"=> "openid profile email"]);
         $res = $this->callTokenEndpoint($uri, $param);
 
         if (!$this->handleToken($res)) {
@@ -125,25 +120,15 @@ class OAuthCallback {
         }
     }
 
-    private function loadCodeAuthorization() {
-        $target = $this->manager->get();
-        $param = [
-            "grant_type"   => "authorization_code",
-            "client_id"    => $target->client_id,
-            "redirect_uri" => $this->myuri,
-            "code"         => $_GET["code"]
-        ];
-        return $this->callTokenEndpoint($param);
-    }
-
     private function callTokenEndpoint($param) {
         $target = $this->manager->get();
+
         $curl = new Curler($target->token_endpoint);
+
         $curl->setCredentials($target->client_id, $target->credentials);
         unset($param["client_id"]); // because the client id is in the header already
-        // $param["client_secret"] = $target->credentials;
 
-        error_log(json_encode($param));
+        // $param["client_secret"] = $target->credentials;
 
         $curl->post($param, "application/x-www-form-urlencoded");
         // $curl->post(json_encode($p), "application/json");
@@ -167,9 +152,9 @@ class OAuthCallback {
             // other OAuth2 APs MAY return other formats?
             // parse_str($curl->getBody(), $result);
         }
-        else {
-            error_log($curl->getBody());
-        }
+        // else {
+        //     error_log($curl->getBody());
+        // }
 
         if (!$result || array_key_exists("error", $result)) {
             return null;
@@ -179,20 +164,9 @@ class OAuthCallback {
     }
 
     private function handleToken($response, $stateInfo=null) {
-        if (empty($response)) {
-            return false;
-        }
+        if (empty($response) &&
+            !verify_keys($response, ["access_token", "id_token"])) {
 
-        $id_token      = $response["id_token"];
-        $access_token  = $response["access_token"];
-        if (array_key_exists("refresh_token", $response)) {
-            $refresh_token = $response["refresh_token"];
-        }
-        if (array_key_exists("expires_in", $response)) {
-            $expires       = $response["expires_in"];
-        }
-
-        if (empty($id_token)) {
             return false;
         }
 
@@ -204,55 +178,58 @@ class OAuthCallback {
             return false;
         }
 
-        // store the tokens for revocation
+        // store the tokens for revocation and other stuff
+        $token = pick_keys($response, ["access_token", "refresh_token"]);
+
+        $expires = 3600; // expires in 1h
+        if (array_key_exists("expires_in", $response)) {
+            $expires = $response["expires_in"];
+        }
+
         $now = time();
         $exp = $now + $expires;
 
-        if ($stateInfo && $stateInfo->refresh_id > 0) {
-            $token = $this->manager->getTokenById($stateInfo->refresh_id);
-            if (!$token) {
-                return false; // no token
-            }
-            $token["access_token"]  = $access_token;
-            $token["refresh_token"] = $refresh_token;
-            $token["expires"]       = $exp;
+        $token["expires"] = $exp;
 
-            // we no longer need the state information
-            $this->manager->consumeState($state);
+        if ($stateInfo && $stateInfo->refresh_id > 0) {
+            $oToken = $this->manager->getTokenById($stateInfo->refresh_id);
+            if (!$oToken) {
+                return false; // no token found?
+            }
+
+            $token = array_merge($oToken, $token);
         }
         else {
             $target =  $this->manager->get();
-            $token = [
-                "access_token"  => $access_token,
-                "refresh_token" => $refresh_token,
-                "expires"       => $exp,
+            $token = array_merge($token,[
                 "created"       => $now,
                 "azp_id"        => $target->azp_id,
                 "userid"        => $user->id
-            ];
+            ]);
         }
 
         $this->manager->storeToken($token);
 
         // we have two cases
         // 1. we authorized a user through the web (with redirect_uri)
-        if ($stateInfo && $stateInfo->redirect_uri) {
-            // FIXME: we MUST track the session
-            // so we can delete the token on logout
-            // we also want to terminate the session if the token is revoked
-            $this->startWebSession($stateInfo);
-            return true;
+        if ($stateInfo) {
+            // we no longer need the state information
+            $this->manager->consumeState($state);
+            if ($stateInfo->redirect_uri) {
+                // FIXME: we MUST track the session
+                // so we can delete the token on logout
+                // we also want to terminate the session if the token is revoked
+                $this->startWebSession($stateInfo);
+                return true;
+            }
         }
 
-        // 2. we issued a moodle token for an app
+        // 2. we issue a moodle token for an app
         $moodle_token = $this->grantInternalToken($user->id, $expires);
 
-        $cliToken = [
-            "access_token"  => $moodle_token,
-            "refresh_token" => $refresh_token,
-            "expires_in"    => $expires,
-            "token_type"    => "Bearer"
-        ];
+        $cliToken = pick_keys($response, ["access_token", "refresh_token", "expires_in"]);
+
+        $cliToken = array_merge($cliToken, ["token_type" => "Bearer", "api_key" => $moodle_token]);
 
         echo json_encode($cliToken);
         return true;
@@ -277,17 +254,13 @@ class OAuthCallback {
         $jwt = $loader->load($jwt);
 
         if (!($jwt = $this->decryptJWE($jwt))) {
-            error_log( "invalid encryption");
             return null;
         }
         if (!($jwt = $this->validateJWT($jwt))) {
-            error_log("invalid signature");
             return null;
         }
 
-        error_log(json_encode($jwt->getPayload()));
-
-        $idClaims = self::getSupportedClaims();
+        $idClaims = $this->manager->getSupportedClaims();
         $userClaims = [];
         foreach ($idClaims as $claim) {
             if ($jwt->hasClaim($claim) && $cdata = $jwt->getClaim($claim)) {
@@ -387,6 +360,9 @@ class OAuthCallback {
         }
 
         $azp = $this->manager->get();
+        if (!$jwt->hasClaim("iss")) {
+            return null;
+        }
         $iss = $jwt->getClaim('iss');
 
         error_log($iss . " " . $azp->issuer);
@@ -562,11 +538,5 @@ class OAuthCallback {
                                            $expires);
         }
         return null;
-    }
-
-    static public function getSupportedClaims() {
-        // by default we support all claims
-        return explode(" ",
-            "sub name given_name family_name middle_name nickname preferred_username profile picture website email email_verified gender birthdate zoneinfo locale phone_number phone_number_verified address updated_at formatted");
     }
 }

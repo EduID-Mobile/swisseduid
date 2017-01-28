@@ -5,6 +5,8 @@
  * plugin.
  */
 
+ require_once __DIR__ . "/../lib.php";
+
 use \Jose\Factory\JWKFactory;
 
 class OAuthManager {
@@ -230,26 +232,72 @@ class OAuthManager {
         }
     }
 
+    public function storeAuthority($config) {
+        global $CFG;
+        $url = $config["url"];
+        $azpData = pick_keys($config, ["name", "url", "flow", "credentials", "issuer", "client_id"]);
+
+        if (!array_key_exists("client_id", $azpData)) {
+            $azpData["client_id"] = $CFG->wwwroot;
+        }
+        if (!array_key_exists("credentials", $azpData)) {
+            $azpData["credentials"] =random_string(160);
+        }
+        // load the configuration
+        $curl = new Curler\Request($changes["url"]);
+        $curl->setPathInfo(".well-known/openid-configuration"); // <- this is fixed
+        $curl->get();
+        if ($curl->getStatus() == 200) {
+            $process = true;
+            try {
+                $srvConfig = json_decode($curl->getBody(), true);
+            }
+            catch (Exception $err) {
+                $process = false;
+            }
+
+            if ($process && !empty($srvConfig)) {
+                $attrs = [
+                    "authorization_endpoint",
+                    "token_endpoint",
+                    "revocation_endpoint",
+                    "end_session_endpoint",
+                    "registration_endpoint",
+                    "introspection_endpoint",
+                    "jwks_uri",
+                    "issuer"
+                ];
+                $azpData = array_merge($azpData, pick_keys($srvConfig, $attrs));
+                $this->store($azpData);
+            }
+            if (array_key_exists("jwks_uri", $azpData) && !empty($azpData["jwks_uri"])) {
+                $this->updateKeySet($azpData["jwks_uri"]);
+            }
+        }
+    }
+
+    public function storeMapping($arrMap) {
+        $arrMap = pick_keys(obj2array($arrMap), $this->getUserAttributes());
+
+        if (!empty($arrMap)) {
+            $this->store(["attr_map" => json_encode($arrMap)]);
+        }
+    }
+
     public function storeKey($keyInfo) {
         global $DB;
         $keyInfo = (array) $keyInfo;
-        foreach (["kid", "crypt_key"] as $k) {
-            if (!array_key_exists($k, $keyInfo)) {
-                throw new Exception("Missing Key Attribute $k ". json_encode($keyInfo));
-            }
-        }
-        if (array_key_exists("keyid", $keyInfo)) {
-            if (!empty($keyInfo["keyid"])) {
-                $keyInfo["id"] = $keyInfo["keyid"];
-            }
-            unset($keyInfo["keyid"]);
+        verify_keys($keyInfo, ["kid", "crypt_key"], "Missing Key Attribute");
+
+        if (array_key_exists("keyid", $keyInfo) && !empty($keyInfo["keyid"])) {
+            $keyInfo["id"] = $keyInfo["keyid"];
         }
 
-        foreach (array_keys($keyInfo) as $attr) {
-            if (!in_array($attr, ["crypt_key", "id", "kid", "jku", "token_id"])) {
-                unset($keyInfo[$attr]);
-            }
+        if (array_key_exists("key", $keyInfo) && !empty($keyInfo["key"])) {
+            $keyInfo["crypt_key"] = $keyInfo["key"];
         }
+
+        $keyInfo = pick_keys($keyInfo, ["crypt_key", "id", "kid", "jku", "token_id"]);
         $keyInfo["azp_id"] = $this->azp;
 
         if (array_key_exists("id", $keyInfo )) {
@@ -318,38 +366,11 @@ class OAuthManager {
         return $this->getDefaultMapping();
     }
 
-    public function getDefaultMapping() {
-        return [
-            "email" => "email",
-            "firstname" => "given_name",
-            "lastname" => "family_name",
-            "idnumber" => "",
-            "icq" => "",
-            "skype" => "",
-            "yahoo" => "",
-            "aim" => "",
-            "msn" => "",
-            "phone1" => "phone_number",
-            "phone2" => "",
-            "institution" => "",
-            "departement" => "",
-            "address" => "address.street_address",
-            "city" => "address.locality",
-            "country" => "address.country",
-            "lang" => "locale",
-            "url" => "website",
-            "middlename" => "middle_name",
-            "firstnamephonetic" => "",
-            "lastnamephonetic" => "",
-            "alternatename" => "nickname"
-        ];
-    }
-
     public function storeToken($token) {
         global $DB;
         $funcname = "update_record";
         if (!array_key_exists("id", $token)) {
-            $token["initial_access_token"] = $token["access_token"];
+            $token["initial_access_token"]  = $token["access_token"];
             $token["initial_refresh_token"] = $token["refresh_token"];
             $funcname = "insert_record";
         }
@@ -384,5 +405,53 @@ class OAuthManager {
                                          null,
                                          ["use"=>"enc"]);
         return json_encode($key->toPublic());
+    }
+
+    public function getUserAttributes() {
+        return array_keys($this->getDefaultMapping());
+    }
+
+    public function getSupportedClaims() {
+        return $this->getStandardClaims();
+    }
+
+    public function getStandardClaims() {
+        // this should get loaded from the database for
+        // an azp
+        return [
+            "email", "given_name", "family_name", "middle_name", "nickname",
+            "preferred_username", "profile", "picture", "website",
+            "email_verified", "gender", "birthdate", "zoneinfo", "locale",
+            "phone_number", "phone_number_verified", "updated_at",
+            "address.street_address", "address.city", "address.locality",
+            "address.country", "address.postal_code", "address.region"
+        ];
+    }
+
+    public function getDefaultMapping() {
+        return [
+            "email" => "email",
+            "firstname" => "given_name",
+            "lastname" => "family_name",
+            "idnumber" => "",
+            "icq" => "",
+            "skype" => "",
+            "yahoo" => "",
+            "aim" => "",
+            "msn" => "",
+            "phone1" => "phone_number",
+            "phone2" => "",
+            "institution" => "",
+            "departement" => "",
+            "address" => "address.street_address",
+            "city" => "address.locality",
+            "country" => "address.country",
+            "lang" => "locale",
+            "url" => "website",
+            "middlename" => "middle_name",
+            "firstnamephonetic" => "",
+            "lastnamephonetic" => "",
+            "alternatename" => "nickname"
+        ];
     }
 }
