@@ -142,26 +142,20 @@ class OAuthCallback {
         $result = null;
 
         $curl->post($param, "application/x-www-form-urlencoded")
-             ->success(function($req) use (&$result){
+             ->then(function($req){ // start parser handler
+                $h = $req->getHeader();
+                $ct = $h["content_type"];
 
-            $h = $req->getHeader();
-            $ct = $h["content_type"];
-
-            // OIDC returns JSON
-            if (strpos($ct, "application/json") !== false) {
-                try {
-                    $result = json_decode($req->getBody(), true);
+                // OIDC returns JSON
+                if (strpos($ct, "application/json") !== false) {
+                    return json_decode($req->getBody(), true);
                 }
-                catch (Exception $err) {
-                    $result = null;
+            }) // end parser handler
+            ->then(function($res) use (&$result){ // start success handler
+                if (!array_key_exists("error", $res)) {
+                    $result = $res;
                 }
-
-                // we should not have this case
-                if (array_key_exists("error", $result)) {
-                    $result = null;
-                }
-            }
-        }); // end success handler
+            }); // end success handler
 
         return $result;
     }

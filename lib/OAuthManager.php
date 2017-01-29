@@ -211,31 +211,27 @@ class OAuthManager {
     }
 
     public function updateKeySet($url) {
+        $self = $this;
         $curl = new Curler\Request($url);
         $curl->get()
-             ->success(function($req) {
-            $process = true;
-            try {
-                $keys = json_decode($req->getBody(), true);
-            }
-            catch (Exception $err) {
-                $process = false;
-            }
-            if ($process &&
-                !empty($keys) &&
-                array_key_exists('keys', $keys) &&
-                !empty($keys["keys"])) {
+             ->then(function($req) {
+                return json_decode($req->getBody(), true);
+             })
+             ->then(function($keys) use ($self) {
+                if (!empty($keys) &&
+                    array_key_exists('keys', $keys) &&
+                    !empty($keys["keys"])) {
 
-                foreach ($keys["keys"] as $k) {
-                    $attr = [];
-                    $attr["kid"] = $k["kid"];
-                    $attr["jku"] = $url;
-                    $attr["crypt_key"] = json_encode($k);
+                    foreach ($keys["keys"] as $k) {
+                        $attr = [];
+                        $attr["kid"] = $k["kid"];
+                        $attr["jku"] = $url;
+                        $attr["crypt_key"] = json_encode($k);
 
-                    $this->storeKey($attr);
+                        $self->storeKey($attr);
+                    }
                 }
-            }
-        });  // end success handler
+            });  // end success handler
     }
 
     public function storeAuthority($config) {
@@ -250,38 +246,33 @@ class OAuthManager {
             $azpData["credentials"] =random_string(160);
         }
         // load the configuration
+        $self = $this;
         $curl = new Curler\Request($changes["url"]);
         $curl->setPathInfo(".well-known/openid-configuration"); // <- try OIDC discovery
         $curl->get()
-             ->success(function ($req) {
+             ->then(function ($req) {
+                return json_decode($req->getBody(), true);
+             })
+             ->then(function ($data) use ($self, $azpData) {
+                 if (!empty($data)) {
+                    $attrs = [
+                        "authorization_endpoint",
+                        "token_endpoint",
+                        "revocation_endpoint",
+                        "end_session_endpoint",
+                        "registration_endpoint",
+                        "introspection_endpoint",
+                        "jwks_uri",
+                        "issuer"
+                    ];
+                    $azpData = array_merge($azpData, pick_keys($data, $attrs));
+                    $self->store($azpData);
 
-            $process = true;
-            try {
-                $srvConfig = json_decode($req->getBody(), true);
-            }
-            catch (Exception $err) {
-                $process = false;
-            }
-
-            if ($process && !empty($srvConfig)) {
-                $attrs = [
-                    "authorization_endpoint",
-                    "token_endpoint",
-                    "revocation_endpoint",
-                    "end_session_endpoint",
-                    "registration_endpoint",
-                    "introspection_endpoint",
-                    "jwks_uri",
-                    "issuer"
-                ];
-                $azpData = array_merge($azpData, pick_keys($srvConfig, $attrs));
-                $this->store($azpData);
-            }
-
-            if (has_key($azpData, "jwks_uri")) {
-                $this->updateKeySet($azpData["jwks_uri"]);
-            }
-        }); // end success handler
+                    if (has_key($azpData, "jwks_uri")) {
+                        $self->updateKeySet($azpData["jwks_uri"]);
+                    }
+                 }
+             }); // end success handler
     }
 
     public function storeMapping($arrMap) {
