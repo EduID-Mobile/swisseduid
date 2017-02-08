@@ -1,13 +1,47 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Swiss edu-ID authentication plugin.
+ *
+ * @package   auth_oauth2
+ * @copyright 2017 Christian Glahn
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+?>
+
 <input type="hidden" id="azp" name="azp" value="<?php echo $azpInfo->id; ?>" />
 <div id="settings">
     <p>
-            Your OAuth2 redirect_uri is <pre><?php echo "$tlaurl/cb"; ?></pre>
+            <?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$tlaurl/cb"; ?></pre>
     </p>
-        <p><label for="name">Authority's Display Name</label><input id="name" name="name" type="text" placeholder="Authority Name" value="<?php echo $azpInfo->name; ?>"></p>
-        <p><label for="iss">Issuer Id (as provided by the Authority)</label><input id="issuer" name="issuer" type="text" placeholder="Issuer Value " value="<?php echo $azpInfo->issuer; ?>"></p>
-        <p><label for="client_id">client_id (as provided by the authority)</label><input id="client_id" name="client_id" type="text" placeholder="client_id (as provided by the authority)" value="<?php echo $azpInfo->client_id; ?>"></p>
-        <p><label for="url">authority OAuth2 Base Url</label><input id="url" name="url" type="text" placeholder="authority OAuth2 Url" value="<?php echo $azpInfo->url; ?>"></p>
-        <p><label for="auth_type">moodle auth type (optional)</label><input id="auth_type" name="auth_type" type="text" placeholder="moodle auth type" value="<?php echo $azpInfo->auth_type?>"></p>
+        <p><label for="name"><?php echo get_string('authority_display_name',
+                     'auth_oauth2'); ?></label><input id="name" name="name" type="text" placeholder="<?php echo get_string('authority_name',
+                     'auth_oauth2'); ?>" value="<?php echo $azpInfo->name; ?>"></p>
+        <p><label for="iss"><?php echo get_string('oauth2_client_id',
+                    'auth_oauth2'); ?></label><input id="issuer" name="issuer" type="text" placeholder="Issuer Value " value="<?php echo $azpInfo->issuer; ?>"></p>
+        <p><label for="client_id"><?php echo get_string('oauth2_client_id',
+                    'auth_oauth2'); ?></label><input id="client_id" name="client_id" type="text" placeholder="client_id (as provided by the authority)" value="<?php echo $azpInfo->client_id; ?>"></p>
+        <p><label for="url"><?php echo get_string('oauth2_authority_base_url',
+                    'auth_oauth2'); ?></label><input id="url" name="url" type="text" placeholder="<?php echo get_string('oauth2_authority_url',
+                    'auth_oauth2'); ?>" value="<?php echo $azpInfo->url; ?>"></p>
+        <p><label for="auth_type"><?php echo get_string('oauth2_moodle_auth_type_optional',
+                    'auth_oauth2'); ?></label><input id="auth_type" name="auth_type" type="text" placeholder="<?php echo get_string('oauth2_moodle_auth_type',
+                    'auth_oauth2'); ?>" value="<?php echo $azpInfo->auth_type?>"></p>
         <p> <label for="flow">OAuth2/OpenID Connect Flow Type</label>
             <select id="flow" name="flow">
                 <option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected"';?>>Code</option>
