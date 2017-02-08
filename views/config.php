@@ -26,7 +26,7 @@ foreach ($authorities as $azp) {
         </ul>
         <div>
                 <p>
-                    <?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$tlaurl/cb"?></pre>
+                    <?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$tlaurl"?></pre>
                 </p>
                 <p>
                     <?php echo get_string('public_key_is', 'auth_oauth2'); ?>
