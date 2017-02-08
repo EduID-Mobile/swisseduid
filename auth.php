@@ -104,6 +104,7 @@ class auth_plugin_oauth2 extends auth_plugin_base {
             default:
                 $file = "config.php";
                 if ($this->manager) {
+                    $authorities = $this->manager->getAuthorities();
                     try {
                         $PK = $this->manager->getPrivateKey();
                         $pubKey = $this->manager->getPublicJWK();
