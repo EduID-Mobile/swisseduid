@@ -40,9 +40,14 @@ $string['oauth2_client_id'] = 'client_id (wie von der Authority zur Verfügung g
 $string['oauth2_kid'] = 'Key Id (wie von der Authority zur Verfügung gestellt)';
 $string['oauth2_jku'] = 'jku (wie von der Authority zur Verfügung gestellt)';
 $string['oauth2_issuer_id'] = 'Issuer Id (wie von der Authority zur Verfügung gestellt)';
+$string['oauth2_issuer_value'] = 'Issuer value';
 $string['oauth2_moodle_auth_type_optional'] = 'Moodle auth Typ (optional)';
 $string['oauth2_moodle_auth_type'] = 'Moodle auth Typ';
 $string['oauth2_save_key'] = 'Key aktualisieren';
+$string['oauth2_code'] = '>Code';
+$string['oauth2_implicit'] = '>Implicit';
+$string['oauth2_hybrid'] = '>Hybrid';
+$string['oauth2_assertion'] = '>Assertion';
 // Authority table.
 $string['eduid_add_new_authority'] = 'Neue Authority hinzufügen';
 $string['eduid_drop_authority_entry'] = 'Authority löschen';

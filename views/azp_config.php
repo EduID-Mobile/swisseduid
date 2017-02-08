@@ -22,6 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
 ?>
 
 <input type="hidden" id="azp" name="azp" value="<?php echo $azpInfo->id; ?>" />
@@ -30,24 +31,31 @@
             <?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$tlaurl/cb"; ?></pre>
     </p>
         <p><label for="name"><?php echo get_string('authority_display_name',
-                     'auth_oauth2'); ?></label><input id="name" name="name" type="text" placeholder="<?php echo get_string('authority_name',
-                     'auth_oauth2'); ?>" value="<?php echo $azpInfo->name; ?>"></p>
+                     'auth_oauth2'); ?></label><input id="name" name="name" type="text" placeholder="<?php echo
+                     get_string('authority_name', 'auth_oauth2'); ?>" value="<?php echo $azpInfo->name; ?>"></p>
         <p><label for="iss"><?php echo get_string('oauth2_client_id',
-                    'auth_oauth2'); ?></label><input id="issuer" name="issuer" type="text" placeholder="Issuer Value " value="<?php echo $azpInfo->issuer; ?>"></p>
+                    'auth_oauth2'); ?></label><input id="issuer" name="issuer" type="text" placeholder="<?php echo
+                     get_string('oauth2_issuer_value', 'auth_oauth2'); ?>
+            " value="<?php echo $azpInfo->issuer; ?>"></p>
         <p><label for="client_id"><?php echo get_string('oauth2_client_id',
-                    'auth_oauth2'); ?></label><input id="client_id" name="client_id" type="text" placeholder="client_id (as provided by the authority)" value="<?php echo $azpInfo->client_id; ?>"></p>
+                    'auth_oauth2'); ?></label><input id="client_id" name="client_id" type="text" placeholder="<?php echo
+                     get_string('oauth2_client_id', 'auth_oauth2'); ?>" value="<?php echo $azpInfo->client_id; ?>"></p>
         <p><label for="url"><?php echo get_string('oauth2_authority_base_url',
-                    'auth_oauth2'); ?></label><input id="url" name="url" type="text" placeholder="<?php echo get_string('oauth2_authority_url',
-                    'auth_oauth2'); ?>" value="<?php echo $azpInfo->url; ?>"></p>
+                    'auth_oauth2'); ?></label><input id="url" name="url" type="text" placeholder="<?php echo
+                    get_string('oauth2_authority_url', 'auth_oauth2'); ?>" value="<?php echo $azpInfo->url; ?>"></p>
         <p><label for="auth_type"><?php echo get_string('oauth2_moodle_auth_type_optional',
                     'auth_oauth2'); ?></label><input id="auth_type" name="auth_type" type="text" placeholder="<?php echo get_string('oauth2_moodle_auth_type',
                     'auth_oauth2'); ?>" value="<?php echo $azpInfo->auth_type?>"></p>
         <p> <label for="flow">OAuth2/OpenID Connect Flow Type</label>
             <select id="flow" name="flow">
-                <option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected"';?>>Code</option>
-                <option value="implict" <?php if ($azpInfo->flow === "implicit") echo 'selected="selected"';?>>Implicit</option>
-                <option value="hybrid" <?php if ($azpInfo->flow === "hybrid") echo 'selected="selected"';?>>Hybrid</option>
-                <option value="assertion" <?php if ($azpInfo->flow === "assertion") echo 'selected="selected"';?>>Assertion</option>
+                <option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected"';?><?php echo
+                    get_string('oauth2_code', 'auth_oauth2'); ?></option>
+                <option value="implict" <?php if ($azpInfo->flow === "implicit") echo 'selected="selected"';?><?php echo
+                    get_string('oauth2_implicit', 'auth_oauth2'); ?></option>
+                <option value="hybrid" <?php if ($azpInfo->flow === "hybrid") echo 'selected="selected"';?><?php echo
+                    get_string('oauth2_hybrid', 'auth_oauth2'); ?></option>
+                <option value="assertion" <?php if ($azpInfo->flow === "assertion") echo 'selected="selected"';?><?php echo
+                    get_string('oauth2_assertion', 'auth_oauth2'); ?></option>
             </select>
         </p>
 </div>
