@@ -58,4 +58,4 @@ $string['eduid_authority_shared_token'] = 'Authority shared token';
 $string['eduid_privkey_for_authority'] = 'Private key';
 $string['eduid_authority_public_key'] = 'Public key';
 $string['eduid_invalid_form'] = 'Please complete all the required fields.';
-?>
+
