@@ -4,8 +4,8 @@
  * manage key chains of authorization servers.
  */
 
- // require_once '../../config.php';
- require_once '/var/www/html/moodle/config.php'; // development only, due to symlinks
+  require_once '../../config.php';
+ //require_once '/var/www/html/moodle/config.php'; // development only, due to symlinks
  require_once $CFG->libdir.'/adminlib.php';
 
  $auth = required_param('auth', PARAM_PLUGIN);

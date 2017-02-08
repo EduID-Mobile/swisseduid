@@ -248,10 +248,12 @@ class OAuthManager {
         }
         // load the configuration
         $self = $this;
-        $curl = new Curler\Request($changes["url"]);
-        $curl->setPathInfo(".well-known/openid-configuration"); // <- try OIDC discovery
+
+        $curl = new Curler\Request(trim($azpData["url"], "/"));
+        $curl->setPathInfo("/.well-known/openid-configuration"); // <- try OIDC discovery
         $curl->get()
              ->then(function ($req) {
+
                 return json_decode($req->getBody(), true);
              })
              ->then(function ($data) use ($self, $azpData) {
