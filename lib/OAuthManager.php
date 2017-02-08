@@ -8,6 +8,7 @@
 require_once __DIR__ . "/../lib.php";
 
 use \Jose\Factory\JWKFactory;
+use \Jose\Object\JWK;
 
 class OAuthManager {
     private $azp;
@@ -400,9 +401,12 @@ class OAuthManager {
 
     public function getPublicJWK() {
         $pk = $this->getPrivateKey();
-        $key = JWKFactory::createFromKey($pk->crypt_key,
-                                         null,
-                                         ["use"=>"enc"]);
+        $ko = json_decode($pk->crypt_key, true);
+        $ko["use"] = "enc";
+        $key = new JWK($ko);
+        // $key = JWKFactory::createFromKey($pk->crypt_key,
+        //                                  null,
+        //                                  ["use"=>"enc"]);
         return json_encode($key->toPublic());
     }
 
