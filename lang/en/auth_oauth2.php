@@ -1,4 +1,27 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Swiss edu-ID authentication plugin.
+ *
+ * @package   auth_oauth2
+ * @copyright 2017 Christian Glahn
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 $string['auth_oauth2description'] = 'Swiss edu-ID authentication plugin';
 $string['pluginname'] = 'Swiss edu-ID authentication plugin';
 $string['eduid_user_info_endpoint'] = 'Swiss edu-ID user information endpoint';
@@ -10,7 +33,9 @@ $string['oauth2_redirect_uri_is'] = 'Your OAuth2 redirect_uri is';
 $string['public_key_is'] = 'Your Public Key is:';
 $string['registered_auth_services'] = 'Registered Authorization Services';
 $string['private_key_present'] = 'Private Key is present';
-// authority table
+$string['oauth2_authority_url'] = 'authority·OAuth2·URL';
+$string['oauth2_client_id'] = 'client_id (as provided by the authority)';
+// Authority table.
 $string['eduid_add_new_authority'] = 'Add New Authority';
 $string['eduid_drop_authority_entry'] = 'Drop Authority';
 $string['eduid_authorities'] = 'Authority name';
