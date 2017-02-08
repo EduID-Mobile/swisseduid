@@ -37,9 +37,12 @@ $string['private_key_present'] = 'Private Key ist vorhanden';
 $string['oauth2_authority_url'] = 'Authority·OAuth2·URL';
 $string['oauth2_authority_base_url'] = 'Authority·OAuth2 base·URL';
 $string['oauth2_client_id'] = 'client_id (wie von der Authority zur Verfügung gestellt)';
+$string['oauth2_kid'] = 'Key Id (wie von der Authority zur Verfügung gestellt)';
+$string['oauth2_jku'] = 'jku (wie von der Authority zur Verfügung gestellt)';
 $string['oauth2_issuer_id'] = 'Issuer Id (wie von der Authority zur Verfügung gestellt)';
 $string['oauth2_moodle_auth_type_optional'] = 'Moodle auth Typ (optional)';
 $string['oauth2_moodle_auth_type'] = 'Moodle auth Typ';
+$string['oauth2_save_key'] = 'Key aktualisieren';
 // Authority table.
 $string['eduid_add_new_authority'] = 'Neue Authority hinzufügen';
 $string['eduid_drop_authority_entry'] = 'Authority löschen';
