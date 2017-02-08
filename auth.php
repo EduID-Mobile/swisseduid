@@ -81,7 +81,7 @@ class auth_plugin_oauth2 extends auth_plugin_base {
 
 		$authorities = $DB->get_records('auth_oauth_azp');
         $azpurl = "$CFG->wwwroot/auth/oauth2/azp.php?auth=oauth2&azp=";
-        $tlaurl = "$CFG->wwwroot/local/tla/service.php/identity/oauth2";
+        $tlaurl = "$CFG->wwwroot/auth/oauth2/cb.php";
 
         // load perspective
         $file = $this->perspective . "_config.php";
