@@ -11,7 +11,7 @@ if (isset($PK)) {
         <textarea id="pk" name="pk"></textarea>
     </div>
     <div>
-        <input type="button" id="gen_key" name="gen_key" value="Generate Private Key"/>
+        <input type="submit" id="gen_key" name="gen_key" value="Generate Private Key"/>
     </div>
     </div>
     <!-- list of authorities -->
