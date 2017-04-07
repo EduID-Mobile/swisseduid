@@ -55,7 +55,7 @@ $string['oauth2_hybrid'] = 'Hybrid';
 $string['oauth2_assertion'] = 'Assertion';
 $string['oauth2_flow_type'] = 'OAuth2/OpenID Connect Flow Type';
 $string['oauth2_key_id'] = 'Issuer Key Id (as provided by the Authority)';
-$string['oauth2_jku_source_url'] = 'JKU Source URL (as provided by the Authority)';
+$string['oauth2_jwk_source_url'] = 'JWK Source URL (as provided by the Authority)';
 $string['oauth2_crypt_key'] = 'Key (as provided by the Authority)';
 // Authority table.
 $string['eduid_add_new_authority'] = 'Add New Authority';
