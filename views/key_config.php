@@ -31,11 +31,18 @@ defined('MOODLE_INTERNAL') || die();
 <div id="settings">
     <div>
         <ul>
-            <li><input id="kid" name="kid" type="text" placeholder="<?php echo get_string('oauth2_kid', 'auth_oauth2');?>"
-                value="<?php echo $keyInfo->kid; ?>"></li>
-            <li><input id="jku" name="jku" type="text" placeholder="<?php echo get_string('oauth2_jku', 'auth_oauth2');?>"
-                value="<?php echo $keyInfo->jku;?>"></li>
-            <li><textarea id="crypt_key" name="crypt_key"><?php echo $keyInfo->crypt_key;?></textarea></li>
+            <li>
+				<label for="kid"><?php echo get_string('oauth2_key_id', 'auth_oauth2'); ?>:</label>
+				<input id="kid" name="kid" type="text" placeholder="<?php echo get_string('oauth2_kid', 'auth_oauth2');?>" value="<?php echo $keyInfo->kid; ?>">
+			</li>
+            <li>
+				<label for="jku"><?php echo get_string('oauth2_jwk_source_url', 'auth_oauth2'); ?>:</label>
+				<input id="jku" name="jku" type="text" placeholder="<?php echo get_string('oauth2_jku', 'auth_oauth2');?>" value="<?php echo $keyInfo->jku;?>">
+			</li>
+            <li>
+				<label for="crypt_key"><?php echo get_string('oauth2_crypt_key', 'auth_oauth2'); ?>:</label>
+				<textarea id="crypt_key" name="crypt_key"><?php echo $keyInfo->crypt_key;?></textarea>
+			</li>
         </ul>
         <div>
             <input type="submit" id="storekey" name="storekey" value="<?php echo get_string('oauth2_update_key', 'auth_oauth2');?>">
