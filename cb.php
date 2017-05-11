@@ -1,13 +1,37 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-// init moodle
-// require_once "../../config.php";
-require_once "/var/www/html/moodle/config.php";
-require_once __DIR__ . "/vendor/autoload.php";
-// load our function
-require_once __DIR__ . "/lib/OAuthCallback.php";
+/**
+ * Swiss edu-ID authentication plugin.
+ *
+ * @package   auth_oauth2
+ * @copyright 2017 Christian Glahn
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-// we have no work on our own
+// Init moodle.
+require(__DIR__.'/../../config.php');
+// require_once '/var/www/html/moodle/config.php'; // development only, due to symlinks
+require_once(__DIR__ . '/vendor/autoload.php');
+// Road our function.
+require_once(__DIR__ . '/lib/OAuthCallback.php');
+
+require_login();
+
+// We have no work on our own.
 $callback = new OAuthCallback();
 
 if (!$callback->isActive()) {
@@ -21,21 +45,19 @@ if (empty($_GET)) {
 }
 
 if (array_key_exists("id", $_GET)) {
-    // normal use when the user comes via the login page
-    // triggers the authorization request
+    // Normal use when the user comes via the login page.
+    // Triggers the authorization request.
     $callback->handleAuthorization();
-}
-elseif (array_key_exists("state", $_GET)) {
-    // response from the authorization endpoint
+} else if (array_key_exists("state", $_GET)) {
+    // Response from the authorization endpoint.
     $callback->authorizeUser();
-}
-elseif (array_key_exists("error", $_GET)) {
+} else if (array_key_exists("error", $_GET)) {
     http_response_code(403);
     exit;
 }
 elseif (array_key_exists("assertion", $_GET)) {
-    // this one handles the assertion (an any future extension)
-    // by passing ALL parameters to the AP token endpoint
+    // This one handles the assertion (an any future extension).
+    // By passing ALL parameters to the AP token endpoint.
     $callback->authorizeAssertion();
 }
 else {
@@ -43,6 +65,5 @@ else {
     exit;
 }
 
-// ensure that moodle is not kicking in
+// Ensure that moodle is not kicking in.
 exit;
-?>
