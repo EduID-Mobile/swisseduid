@@ -123,7 +123,7 @@ class OAuthCallback {
         global $CFG;
 
         $param = array_merge($_GET, ["scope"=> "openid profile email"]);
-        $res = $this->callTokenEndpoint($uri, $param);
+        $res = $this->callTokenEndpoint($param);
 
         if (!$this->handleToken($res)) {
             http_response_code(403);
@@ -163,11 +163,10 @@ class OAuthCallback {
     private function handleToken($response, $stateInfo=null) {
         if (empty($response) &&
             !verify_keys($response, ["access_token", "id_token"])) {
-
             return false;
         }
 
-        if (!($user = $this->processAssertion($id_token))) {
+        if (!($user = $this->processAssertion($response["id_token"]))) {
             return false;
         }
 
@@ -258,6 +257,7 @@ class OAuthCallback {
         }
 
         $idClaims = $this->manager->getSupportedClaims();
+
         $userClaims = [];
         foreach ($idClaims as $claim) {
             if ($jwt->hasClaim($claim) && $cdata = $jwt->getClaim($claim)) {
@@ -346,8 +346,6 @@ class OAuthCallback {
 
         $jwk_set = $this->prepareKeySet($key->crypt_key, ["use"=>"sig"]);
 
-        error_log(json_encode($jwk_set));
-
         $verifier = Verifier::createVerifier([$alg]);
         try {
             $verifier->verifyWithKeySet($jwt, $jwk_set);
@@ -362,7 +360,7 @@ class OAuthCallback {
         }
         $iss = $jwt->getClaim('iss');
 
-        error_log($iss . " " . $azp->issuer);
+        // error_log($iss . " " . $azp->issuer);
 
         if (empty($iss) || $iss != $azp->issuer) {
             return null;
