@@ -424,6 +424,7 @@ class OAuthManager {
         // this should get loaded from the database for
         // an azp
         return [
+            "sub",
             "email", "given_name", "family_name", "middle_name", "nickname",
             "preferred_username", "profile", "picture", "website",
             "email_verified", "gender", "birthdate", "zoneinfo", "locale",
