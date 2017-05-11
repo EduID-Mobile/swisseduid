@@ -33,10 +33,14 @@ elseif (array_key_exists("error", $_GET)) {
     http_response_code(403);
     exit;
 }
-else {
+elseif (array_key_exists("assertion", $_GET)) {
     // this one handles the assertion (an any future extension)
     // by passing ALL parameters to the AP token endpoint
     $callback->authorizeAssertion();
+}
+else {
+    http_response_code(403); // bad request
+    exit;
 }
 
 // ensure that moodle is not kicking in
