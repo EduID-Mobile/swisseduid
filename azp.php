@@ -26,7 +26,7 @@
  */
 
 require(__DIR__.'/../../config.php');
-//require_once '/var/www/html/moodle/config.php'; // development only, due to symlinks
+// require_once('/var/www/html/moodle/config.php'); // development only, due to symlinks
 require_once($CFG->libdir.'/adminlib.php');
 
 $auth = required_param('auth', PARAM_PLUGIN);

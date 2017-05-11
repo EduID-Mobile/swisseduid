@@ -7,7 +7,7 @@ require_once("$CFG->dirroot/user/lib.php");
 
 require_once("$CFG->dirroot/webservice/lib.php");
 
-require_once __DIR__ . "/OAuthManager.php";
+require_once(__DIR__ . "/OAuthManager.php");
 
 use \Curler\Request as Curler;
 

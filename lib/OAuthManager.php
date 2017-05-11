@@ -5,7 +5,7 @@
  * plugin.
  */
 
-require_once __DIR__ . "/../lib.php";
+require_once(__DIR__ . "/../lib.php");
 
 use \Jose\Factory\JWKFactory;
 use \Jose\Object\JWK;

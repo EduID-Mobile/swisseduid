@@ -22,14 +22,16 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+require_once(__DIR__ . '/vendor/autoload.php');
+
 // Init moodle.
 require(__DIR__.'/../../config.php');
-// require_once '/var/www/html/moodle/config.php'; // development only, due to symlinks
-require_once(__DIR__ . '/vendor/autoload.php');
-// Road our function.
+// require_once('/var/www/html/moodle/config.php'); // development only, due to symlinks
+
+// Load our function.
 require_once(__DIR__ . '/lib/OAuthCallback.php');
 
-require_login();
+//require_login();
 
 // We have no work on our own.
 $callback = new OAuthCallback();
