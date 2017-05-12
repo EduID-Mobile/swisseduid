@@ -31,7 +31,9 @@ require(__DIR__.'/../../config.php');
 // Load our function.
 require_once(__DIR__ . '/lib/OAuthCallback.php');
 
-//require_login();
+// This is an AUTHENTICATION initiator/callback. At this point moodle does
+// does not know about the user.
+// COMMENTED ON PURPOSE require_login(); // NEVER UNCOMMENT
 
 // We have no work on our own.
 $callback = new OAuthCallback();
