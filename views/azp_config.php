@@ -30,7 +30,10 @@ global $OUTPUT;
 <input type="hidden" id="azp" name="azp" value="<?php echo $azpInfo->id; ?>" />
 <div id="settings">
 	<p>
-		<?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$tlaurl/cb"; ?></pre>
+		<?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$redirecturl"; ?></pre>
+	</p>
+    <p>
+		<?php echo get_string('oauth2_prelogin_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$redirecturl?id=" . $azpInfo->id; ?></pre>
 	</p>
 	<p>
 		<label for="name"><?php echo get_string('authority_name', 'auth_oauth2'); ?>:</label>
@@ -52,6 +55,10 @@ global $OUTPUT;
 		<label for="auth_type"><?php echo get_string('oauth2_moodle_auth_type_optional', 'auth_oauth2'); ?>:</label>
 		<input id="auth_type" name="auth_type" type="text" value="<?php echo $azpInfo->auth_type?>">
 	</p>
+    <p>
+        <label for="auth_type"><?php echo get_string('oauth2_client_secret', 'auth_oauth2'); ?>:</label>
+        <input id="auth_type" name="auth_type" type="text" value="<?php echo $azpInfo->credentials?>">
+    </p>
 	<p>
 		<label for="flow"><?php echo get_string('oauth2_flow_type', 'auth_oauth2'); ?>:</label>
 		<select id="flow" name="flow">
