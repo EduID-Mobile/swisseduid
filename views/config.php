@@ -27,17 +27,40 @@ defined('MOODLE_INTERNAL') || die();
 
 global $OUTPUT;
 ?>
+
+<style>
+	div#key_status span {
+		font-weight: bold;
+	}
+
+	div#key_status a {
+		font-weight: bold;
+		color: red;
+		text-decoration: none;
+	}
+
+	input, div#new_key_generator textarea {
+		width: 100%;
+	}
+</style>
+
 <div id="settings">
     <!-- global private key settings -->
     <div id="private_key">
 		<?php if (isset($PK)) { ?>
-			<div><?php echo get_string('private_key_present', 'auth_oauth2') ?></div>
+			<div id="key_status">
+				<span><?php echo get_string('private_key_present', 'auth_oauth2') ?> :: </span>
+				<a href="#" onclick="Y.one('#new_key_generator').show(); Y.one('#key_status').hide()"><?php echo get_string('generate_new_key', 'auth_oauth2') ?></a>
+			</div>
 		<?php } ?>
-		<div>
-			<textarea id="pk" name="pk"></textarea>
-		</div>
-		<div>
-			<input type="submit" id="gen_key" name="gen_key" value="<?php echo get_string('generate_private_key', 'auth_oauth2'); ?>"/>
+		<div id="new_key_generator" <?php if (isset($PK)) echo 'style="display: none"' ?>>
+			<div>
+				<textarea id="pk" name="pk"></textarea>
+			</div>
+			<div>
+				<input type="submit" id="gen_key" name="gen_key" value="<?php echo get_string('generate_private_key', 'auth_oauth2'); ?>"/>
+				<input type="button" id="cancel_generation" onclick="Y.one('#new_key_generator').hide(); Y.one('#key_status').show()" value="<?php echo get_string('cancel', 'auth_oauth2'); ?>"/>
+			</div>
 		</div>
     </div>
     <!-- list of authorities -->
