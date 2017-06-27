@@ -161,10 +161,14 @@ class OAuthCallback {
     }
 
     private function handleToken($response, $stateInfo=null) {
-        if (empty($response) &&
+        if (empty($response) ||
             !verify_keys($response, ["access_token", "id_token"])) {
+
+                //error_log(json_encode($response));
             return false;
         }
+
+        // error_log("keys OK? " . (verify_keys($response, ["access_token", "id_token"])? "ok" : "no"));
 
         if (!($user = $this->processAssertion($response["id_token"]))) {
             return false;

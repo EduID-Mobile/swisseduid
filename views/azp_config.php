@@ -32,6 +32,9 @@ global $OUTPUT;
 	<p>
 		<?php echo get_string('oauth2_redirect_uri_is', 'auth_swisseduid'); ?> <pre><?php echo "$tlaurl/cb"; ?></pre>
 	</p>
+    <p>
+		<?php echo get_string('oauth2_prelogin_uri_is', 'auth_swisseduid'); ?> <pre><?php echo "$redirecturl?id=" . $azpInfo->id; ?></pre>
+	</p>
 	<p>
 		<label for="name"><?php echo get_string('authority_name', 'auth_swisseduid'); ?>:</label>
 		<input id="name" name="name" type="text" value="<?php echo $azpInfo->name; ?>">
@@ -52,6 +55,10 @@ global $OUTPUT;
 		<label for="auth_type"><?php echo get_string('oauth2_moodle_auth_type_optional', 'auth_swisseduid'); ?>:</label>
 		<input id="auth_type" name="auth_type" type="text" value="<?php echo $azpInfo->auth_type?>">
 	</p>
+    <p>
+        <label for="auth_type"><?php echo get_string('oauth2_client_secret', 'auth_swisseduid'); ?>:</label>
+        <input id="auth_type" name="auth_type" type="text" value="<?php echo $azpInfo->credentials?>">
+    </p>
 	<p>
 		<label for="flow"><?php echo get_string('oauth2_flow_type', 'auth_swisseduid'); ?>:</label>
 		<select id="flow" name="flow">
