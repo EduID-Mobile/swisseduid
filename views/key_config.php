@@ -17,7 +17,7 @@
 /**
  * Swiss edu-ID authentication plugin.
  *
- * @package   auth_oauth2
+ * @package   auth_swisseduid
  * @copyright 2017 Christian Glahn
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -32,20 +32,20 @@ defined('MOODLE_INTERNAL') || die();
     <div>
         <ul>
             <li>
-				<label for="kid"><?php echo get_string('oauth2_key_id', 'auth_oauth2'); ?>:</label>
-				<input id="kid" name="kid" type="text" placeholder="<?php echo get_string('oauth2_kid', 'auth_oauth2');?>" value="<?php echo $keyInfo->kid; ?>">
+				<label for="kid"><?php echo get_string('oauth2_key_id', 'auth_swisseduid'); ?>:</label>
+				<input id="kid" name="kid" type="text" placeholder="<?php echo get_string('oauth2_kid', 'auth_swisseduid');?>" value="<?php echo $keyInfo->kid; ?>">
 			</li>
             <li>
-				<label for="jku"><?php echo get_string('oauth2_jwk_source_url', 'auth_oauth2'); ?>:</label>
-				<input id="jku" name="jku" type="text" placeholder="<?php echo get_string('oauth2_jku', 'auth_oauth2');?>" value="<?php echo $keyInfo->jku;?>">
+				<label for="jku"><?php echo get_string('oauth2_jwk_source_url', 'auth_swisseduid'); ?>:</label>
+				<input id="jku" name="jku" type="text" placeholder="<?php echo get_string('oauth2_jku', 'auth_swisseduid');?>" value="<?php echo $keyInfo->jku;?>">
 			</li>
             <li>
-				<label for="crypt_key"><?php echo get_string('oauth2_crypt_key', 'auth_oauth2'); ?>:</label>
+				<label for="crypt_key"><?php echo get_string('oauth2_crypt_key', 'auth_swisseduid'); ?>:</label>
 				<textarea id="crypt_key" name="crypt_key"><?php echo $keyInfo->crypt_key;?></textarea>
 			</li>
         </ul>
         <div>
-            <input type="submit" id="storekey" name="storekey" value="<?php echo get_string('oauth2_update_key', 'auth_oauth2');?>">
+            <input type="submit" id="storekey" name="storekey" value="<?php echo get_string('oauth2_update_key', 'auth_swisseduid');?>">
         </div>
     </div>
 </div>

@@ -17,12 +17,12 @@
 /**
  * Swiss edu-ID authentication plugin.
  *
- * @package   auth_oauth2
+ * @package   auth_swisseduid
  * @copyright 2017 Christian Glahn
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['auth_oauth2description'] = 'The standard authentication plugin for the Swiss universities';
+$string['auth_swisseduiddescription'] = 'The standard authentication plugin for the Swiss universities';
 $string['pluginname'] = 'Swiss edu-ID authentication plugin';
 $string['eduid_user_info_endpoint'] = 'Swiss edu-ID user information endpoint';
 $string['service_token_duration'] = 'Service token duration in hours';

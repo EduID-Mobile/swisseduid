@@ -17,7 +17,7 @@
 /**
  * Swiss edu-ID authentication plugin.
  *
- * @package   auth_oauth2
+ * @package   auth_swisseduid
  * @copyright 2017 Christian Glahn
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -30,52 +30,52 @@ global $OUTPUT;
 <input type="hidden" id="azp" name="azp" value="<?php echo $azpInfo->id; ?>" />
 <div id="settings">
 	<p>
-		<?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?> <pre><?php echo "$tlaurl/cb"; ?></pre>
+		<?php echo get_string('oauth2_redirect_uri_is', 'auth_swisseduid'); ?> <pre><?php echo "$tlaurl/cb"; ?></pre>
 	</p>
 	<p>
-		<label for="name"><?php echo get_string('authority_name', 'auth_oauth2'); ?>:</label>
+		<label for="name"><?php echo get_string('authority_name', 'auth_swisseduid'); ?>:</label>
 		<input id="name" name="name" type="text" value="<?php echo $azpInfo->name; ?>">
 	</p>
 	<p>
-		<label for="iss"><?php echo get_string('oauth2_issuer_value', 'auth_oauth2'); ?>:</label>
+		<label for="iss"><?php echo get_string('oauth2_issuer_value', 'auth_swisseduid'); ?>:</label>
 		<input id="issuer" name="issuer" type="text" value="<?php echo $azpInfo->issuer; ?>">
 	</p>
 	<p>
-		<label for="client_id"><?php echo get_string('oauth2_client_id', 'auth_oauth2'); ?>:</label>
+		<label for="client_id"><?php echo get_string('oauth2_client_id', 'auth_swisseduid'); ?>:</label>
 		<input id="client_id" name="client_id" type="text" value="<?php echo $azpInfo->client_id; ?>">
 	</p>
 	<p>
-		<label for="url"><?php echo get_string('oauth2_authority_base_url', 'auth_oauth2'); ?>:</label>
+		<label for="url"><?php echo get_string('oauth2_authority_base_url', 'auth_swisseduid'); ?>:</label>
 		<input id="url" name="url" type="text" value="<?php echo $azpInfo->url; ?>">
 	</p>
 	<p>
-		<label for="auth_type"><?php echo get_string('oauth2_moodle_auth_type_optional', 'auth_oauth2'); ?>:</label>
+		<label for="auth_type"><?php echo get_string('oauth2_moodle_auth_type_optional', 'auth_swisseduid'); ?>:</label>
 		<input id="auth_type" name="auth_type" type="text" value="<?php echo $azpInfo->auth_type?>">
 	</p>
 	<p>
-		<label for="flow"><?php echo get_string('oauth2_flow_type', 'auth_oauth2'); ?>:</label>
+		<label for="flow"><?php echo get_string('oauth2_flow_type', 'auth_swisseduid'); ?>:</label>
 		<select id="flow" name="flow">
 			<option value="code" <?php if ($azpInfo->flow === "code") echo 'selected="selected"';?>>
-				<?php echo get_string('oauth2_code', 'auth_oauth2'); ?>
+				<?php echo get_string('oauth2_code', 'auth_swisseduid'); ?>
 			</option>
 			<option value="implict" <?php if ($azpInfo->flow === "implicit") echo 'selected="selected"';?>>
-				<?php echo get_string('oauth2_implicit', 'auth_oauth2'); ?>
+				<?php echo get_string('oauth2_implicit', 'auth_swisseduid'); ?>
 			</option>
 			<option value="hybrid" <?php if ($azpInfo->flow === "hybrid") echo 'selected="selected"';?>>
-				<?php echo get_string('oauth2_hybrid', 'auth_oauth2'); ?>
+				<?php echo get_string('oauth2_hybrid', 'auth_swisseduid'); ?>
 			</option>
 			<option value="assertion" <?php if ($azpInfo->flow === "assertion") echo 'selected="selected"';?>>
-				<?php echo get_string('oauth2_assertion', 'auth_oauth2'); ?>
+				<?php echo get_string('oauth2_assertion', 'auth_swisseduid'); ?>
 			</option>
 		</select>
 	</p>
 </div>
 <div>
-	<input type="submit" id="storeazp" name="storeazp" value="<?php echo get_string('update_authority', 'auth_oauth2') ?>">
+	<input type="submit" id="storeazp" name="storeazp" value="<?php echo get_string('update_authority', 'auth_swisseduid') ?>">
 </div>
 	<!-- list of keys -->
 <div id="keyList">
-    <?php echo $OUTPUT->heading(get_string('registered_keys', 'auth_oauth2'), 3);?>
+    <?php echo $OUTPUT->heading(get_string('registered_keys', 'auth_swisseduid'), 3);?>
 	<ul>
 		<?php
 foreach ($keyList as $key) {
@@ -102,19 +102,19 @@ foreach ($keyList as $key) {
 		<input type="hidden" id="keyid" name="keyid" value=""/>
 
 			<p>
-				<label for="kid"><?php echo get_string('oauth2_key_id', 'auth_oauth2'); ?>:</label>
+				<label for="kid"><?php echo get_string('oauth2_key_id', 'auth_swisseduid'); ?>:</label>
 				<input id="kid" name="kid" type="text">
 			</p>
 			<p>
-				<label for="jku"><?php echo get_string('oauth2_jwk_source_url', 'auth_oauth2'); ?>:</label>
+				<label for="jku"><?php echo get_string('oauth2_jwk_source_url', 'auth_swisseduid'); ?>:</label>
 				<input id="jku" name="jku" type="text">
 			</p>
 			<p>
-				<label for="crypt_key"><?php echo get_string('oauth2_crypt_key', 'auth_oauth2'); ?>:</label>
+				<label for="crypt_key"><?php echo get_string('oauth2_crypt_key', 'auth_swisseduid'); ?>:</label>
 				<textarea id="crypt_key" name="crypt_key"></textarea>
 			</p>
 		<div>
-			<input type="submit" id="storekey" name="storekey" value="<?php echo get_string('add_key', 'auth_oauth2'); ?>">
+			<input type="submit" id="storekey" name="storekey" value="<?php echo get_string('add_key', 'auth_swisseduid'); ?>">
 		</div>
 	</div>
 </div>

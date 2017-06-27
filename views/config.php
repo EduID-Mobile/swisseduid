@@ -17,7 +17,7 @@
 /**
  * Swiss edu-ID authentication plugin.
  *
- * @package   auth_oauth2
+ * @package   auth_swisseduid
  * @copyright 2017 Christian Glahn
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -49,8 +49,8 @@ global $OUTPUT;
     <div id="private_key">
 		<?php if (isset($PK)) { ?>
 			<div id="key_status">
-				<span><?php echo get_string('private_key_present', 'auth_oauth2') ?> :: </span>
-				<a href="#" onclick="Y.one('#new_key_generator').show(); Y.one('#key_status').hide()"><?php echo get_string('generate_new_key', 'auth_oauth2') ?></a>
+				<span><?php echo get_string('private_key_present', 'auth_swisseduid') ?> :: </span>
+				<a href="#" onclick="Y.one('#new_key_generator').show(); Y.one('#key_status').hide()"><?php echo get_string('generate_new_key', 'auth_swisseduid') ?></a>
 			</div>
 		<?php } ?>
 		<div id="new_key_generator" <?php if (isset($PK)) echo 'style="display: none"' ?>>
@@ -58,14 +58,14 @@ global $OUTPUT;
 				<textarea id="pk" name="pk"></textarea>
 			</div>
 			<div>
-				<input type="submit" id="gen_key" name="gen_key" value="<?php echo get_string('generate_private_key', 'auth_oauth2'); ?>"/>
-				<input type="button" id="cancel_generation" onclick="Y.one('#new_key_generator').hide(); Y.one('#key_status').show()" value="<?php echo get_string('cancel', 'auth_oauth2'); ?>"/>
+				<input type="submit" id="gen_key" name="gen_key" value="<?php echo get_string('generate_private_key', 'auth_swisseduid'); ?>"/>
+				<input type="button" id="cancel_generation" onclick="Y.one('#new_key_generator').hide(); Y.one('#key_status').show()" value="<?php echo get_string('cancel', 'auth_swisseduid'); ?>"/>
 			</div>
 		</div>
     </div>
     <!-- list of authorities -->
     <div id="authorityList">
-    	<?php echo $OUTPUT->heading(get_string('registered_auth_services', 'auth_oauth2'), 3);?>
+    	<?php echo $OUTPUT->heading(get_string('registered_auth_services', 'auth_swisseduid'), 3);?>
         <ul>
             <?php foreach ($authorities as $azp) {
 				echo '<li><a href="'.$azpurl . $azp->id.'">'.$azp->name.'</a></li>';
@@ -73,10 +73,10 @@ global $OUTPUT;
         </ul>
         <div>
             <p>
-                <?php echo get_string('oauth2_redirect_uri_is', 'auth_oauth2'); ?>: <pre><?php echo "$tlaurl/cb"?></pre>
+                <?php echo get_string('oauth2_redirect_uri_is', 'auth_swisseduid'); ?>: <pre><?php echo "$tlaurl/cb"?></pre>
             </p>
             <p>
-                <?php echo get_string('public_key_is', 'auth_oauth2'); ?>
+                <?php echo get_string('public_key_is', 'auth_swisseduid'); ?>
             </p>
             <p>
 				<pre>
@@ -84,15 +84,15 @@ global $OUTPUT;
 				</pre>
 			</p>
             <p>
-				<label for="name"><?php echo get_string('authority_name', 'auth_oauth2'); ?>:</label>
+				<label for="name"><?php echo get_string('authority_name', 'auth_swisseduid'); ?>:</label>
 				<input id="name" name="name" type="text">
 			</p>
             <p>
-				<label for="client_id"><?php echo get_string('oauth2_client_id', 'auth_oauth2'); ?>:</label>
+				<label for="client_id"><?php echo get_string('oauth2_client_id', 'auth_swisseduid'); ?>:</label>
 				<input id="client_id" name="client_id" type="text">
 			</p>
             <p>
-				<label for="url"><?php echo get_string('oauth2_authority_url', 'auth_oauth2'); ?>:</label>
+				<label for="url"><?php echo get_string('oauth2_authority_url', 'auth_swisseduid'); ?>:</label>
 				<input id="url" name="url" type="text">
 			</p>
         </div>

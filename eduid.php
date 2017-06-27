@@ -23,7 +23,7 @@
  * This script will identify which service is requested and launches it.
  * ***********************************************************************
  *
- * @package   auth_oauth2
+ * @package   auth_swisseduid
  * @copyright 2017 Christian Glahn
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

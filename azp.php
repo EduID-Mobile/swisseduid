@@ -20,7 +20,7 @@
  * This script is part of the configuration of the plugin. It allows to
  * manage key chains of authorization servers.
  *
- * @package   auth_oauth2
+ * @package   auth_swisseduid
  * @copyright 2017 Christian Glahn
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
