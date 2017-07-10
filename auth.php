@@ -32,7 +32,7 @@ require_once(__DIR__ . '/lib.php');
 require_once($CFG->libdir.'/authlib.php');
 require_once(__DIR__ . '/lib/OAuthManager.php');
 
-class auth_plugin_oauth2 extends auth_plugin_base {
+class auth_plugin_swisseduid extends auth_plugin_base {
 
     // - overview/config
     // - azp
@@ -44,9 +44,9 @@ class auth_plugin_oauth2 extends auth_plugin_base {
     /**
      * Constructor.
      */
-    function auth_plugin_oauth2() {
-        $this->authtype = 'oauth2';
-        $this->config = get_config('auth/oauth2');
+    function auth_plugin_swisseduid() {
+        $this->authtype = 'swisseduid';
+        $this->config = get_config('auth/swisseduid');
         $this->manager = new OAuthManager();
     }
 
@@ -101,9 +101,9 @@ class auth_plugin_oauth2 extends auth_plugin_base {
         }
 
         $authorities = $DB->get_records('auth_oauth_azp');
-        $azpurl = "$CFG->wwwroot/auth/oauth2/azp.php?auth=oauth2&azp=";
-        $redirecturl = "$CFG->wwwroot/auth/oauth2/cb.php";
-        $preloginurl = "$CFG->wwwroot/auth/oauth2/cb.php?";
+        $azpurl = "$CFG->wwwroot/auth/swisseduid/azp.php?auth=oauth2&azp=";
+        $redirecturl = "$CFG->wwwroot/auth/swisseduid/cb.php";
+        $preloginurl = "$CFG->wwwroot/auth/swisseduid/cb.php?";
 
         // load perspective
         $file = $this->perspective . "_config.php";
@@ -180,7 +180,7 @@ class auth_plugin_oauth2 extends auth_plugin_base {
 
         $idps = $DB->get_records("auth_oauth_azp");
 
-        $myurl = $CFG->wwwroot . "/auth/oauth2/cb.php";
+        $myurl = $CFG->wwwroot . "/auth/swisseduid/cb.php";
 
         foreach ($idps as $idp) {
             $retval[] = [
