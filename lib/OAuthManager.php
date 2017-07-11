@@ -27,7 +27,7 @@ class OAuthManager {
     }
 
     public function aud() {
-        return $CFG->wwwroot ."/auth/oauth2/cb.php";
+        return $CFG->wwwroot ."/auth/swisseduid/cb.php";
     }
 
     public function findById($id) {

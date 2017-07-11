@@ -29,6 +29,7 @@ $string['service_token_duration'] = 'Service token Dauer in Stunden';
 $string['app_token_duration'] = 'App token Dauer in Stunden';
 $string['generate_new_key'] = 'Generieren neue key';
 $string['generate_private_key'] = 'Private Key generieren';
+$string['private_key'] = 'Private Key';
 $string['authority_display_name'] = 'Authority\'s Display Name';
 $string['authority_name'] = 'Name der Authority';
 $string['update_authority'] = 'Aktualisieren Authority';

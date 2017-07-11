@@ -30,6 +30,7 @@ require_once(__DIR__ . '/vendor/autoload.php');
 require_once(__DIR__ . '/lib.php');
 
 require_once($CFG->libdir.'/authlib.php');
+
 require_once(__DIR__ . '/lib/OAuthManager.php');
 
 class auth_plugin_swisseduid extends auth_plugin_base {

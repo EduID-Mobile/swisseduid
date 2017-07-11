@@ -29,6 +29,7 @@ $string['service_token_duration'] = 'Service token duration in hours';
 $string['app_token_duration'] = 'App token duration in hours';
 $string['generate_new_key'] = 'Generate new key';
 $string['generate_private_key'] = 'Generate Private Key';
+$string['private_key'] = 'Private Key';
 $string['cancel'] = 'Cancel';
 $string['authority_display_name'] = 'Authority\'s Display Name';
 $string['authority_name'] = 'Authority name';

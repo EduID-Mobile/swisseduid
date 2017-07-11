@@ -1,8 +1,8 @@
 {
-    "name": "moodle/oauth2",
+    "name": "moodle/swisseduid",
     "type": "library",
-    "description": "An OAuth2 authorization plugin for Moodle",
-    "homepage": "https://github.com/BLC-HTWChur/oauth2",
+    "description": "OAuth2 based EduID authorization plugin for Moodle",
+    "homepage": "https://github.com/BLC-HTWChur/swisseduid",
     "license": "AGPL-3.0",
     "version": "2.0.2",
     "require": {

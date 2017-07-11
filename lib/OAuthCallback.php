@@ -31,7 +31,7 @@ class OAuthCallback {
     public function __construct() {
         global $CFG;
         $this->manager = new OAuthManager();
-        $this->myuri = $CFG->wwwroot . "/auth/oauth2/cb.php";
+        $this->myuri = $CFG->wwwroot . "/auth/swisseduid/cb.php";
     }
 
     public function isActive() {

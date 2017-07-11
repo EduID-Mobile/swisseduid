@@ -16,8 +16,8 @@ To install please proceed as follows:
  1b. You are brave and install directly from github use these commands:
 
  ```
- $ git clone git://github.com/BLC-HTWChur/oauth2.git oauth2
- $ cd oauth2
+ $ git clone git://github.com/BLC-HTWChur/swisseduid.git swisseduid
+ $ cd swisseduid
  $ composer install
  ```
 

@@ -1,7 +1,7 @@
 <?php
     // note: OAuth has several endpoints
     $apis['org.ietf.oauth2'] = [
-        "apiLink" => "auth/oauth2/cb.php",
+        "apiLink" => "auth/swisseduid/cb.php",
         "transport" => array("REST")
     ];
 ?>
