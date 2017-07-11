@@ -80,7 +80,7 @@ global $OUTPUT;
             </p>
             <p>
 				<pre>
-					<?php echo $pubKey; ?>
+					<?php if(!empty($pubKey)) echo $pubKey; ?>
 				</pre>
 			</p>
             <p>
