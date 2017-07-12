@@ -289,24 +289,27 @@ class OAuthManager {
     public function storeKey($keyInfo) {
         global $DB;
         $keyInfo = (array) $keyInfo;
-        verify_keys($keyInfo, ["kid", "crypt_key"], "Missing Key Attribute");
 
-        if (array_key_exists("keyid", $keyInfo) && !empty($keyInfo["keyid"])) {
-            $keyInfo["id"] = $keyInfo["keyid"];
+        /* verify_keys($keyInfo, ["kid", "crypt_key"], "Missing Key Attribute"); */
+
+        /* if (array_key_exists("keyid", $keyInfo) && !empty($keyInfo["keyid"])) { */
+        if (array_key_exists("kid", $keyInfo) && !empty($keyInfo["kid"])) {
+            $keyInfo["id"] = $keyInfo["kid"];
         }
 
-        if (array_key_exists("key", $keyInfo) && !empty($keyInfo["key"])) {
-            $keyInfo["crypt_key"] = $keyInfo["key"];
-        }
+        /* if (array_key_exists("key", $keyInfo) && !empty($keyInfo["key"])) { */
+        /*     $keyInfo["crypt_key"] = $keyInfo["key"]; */
+        /* } */
 
         $keyInfo = pick_keys($keyInfo, ["crypt_key", "id", "kid", "jku", "token_id"]);
         $keyInfo["azp_id"] = $this->azp;
+        $stored_key_entry = $DB->get_record("auth_oauth_keys", array('id' => $keyInfo["id"]));
 
-        if (array_key_exists("id", $keyInfo )) {
-            $DB->update_record("auth_oauth_keys", $keyInfo);
-        }
-        else {
+        /* if (array_key_exists("id", $keyInfo )) { */
+        if ($stored_key_entry === false) {
             $DB->insert_record("auth_oauth_keys", $keyInfo);
+        } else {
+            $DB->update_record("auth_oauth_keys", $keyInfo);
         }
     }
 
