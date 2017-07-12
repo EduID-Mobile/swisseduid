@@ -42,6 +42,7 @@ $string['public_key_is'] = 'Your Public Key is:';
 $string['registered_auth_services'] = 'Registered Authorization Services';
 $string['registered_keys'] = 'Registered Keys';
 $string['private_key_present'] = 'Private Key is present';
+$string['oauth2_update_key'] = 'Update key';
 $string['oauth2_authority_url'] = 'Authority OAuth2 URL';
 $string['oauth2_authority_base_url'] = 'Authority OAuth2 base URL';
 $string['oauth2_client_id'] = 'client_id (as provided by the authority)';
