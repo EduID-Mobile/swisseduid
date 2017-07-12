@@ -102,7 +102,7 @@ class auth_plugin_swisseduid extends auth_plugin_base {
         }
 
         $authorities = $DB->get_records('auth_oauth_azp');
-        $azpurl = "$CFG->wwwroot/auth/swisseduid/azp.php?auth=oauth2&azp=";
+        $azpurl = "$CFG->wwwroot/auth/swisseduid/azp.php?auth=swisseduid&azp=";
         $redirecturl = "$CFG->wwwroot/auth/swisseduid/cb.php";
         $preloginurl = "$CFG->wwwroot/auth/swisseduid/cb.php?";
 
