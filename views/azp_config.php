@@ -56,8 +56,8 @@ global $OUTPUT;
 		<input id="auth_type" name="auth_type" type="text" value="<?php echo $azpInfo->auth_type?>">
 	</p>
     <p>
-        <label for="auth_type"><?php echo get_string('oauth2_client_secret', 'auth_swisseduid'); ?>:</label>
-        <input id="auth_type" name="auth_type" type="text" value="<?php echo $azpInfo->credentials?>">
+        <label for="credentials"><?php echo get_string('oauth2_client_secret', 'auth_swisseduid'); ?>:</label>
+        <input id="credentials" name="credentials" type="text" value="<?php echo $azpInfo->credentials?>">
     </p>
 	<p>
 		<label for="flow"><?php echo get_string('oauth2_flow_type', 'auth_swisseduid'); ?>:</label>
@@ -105,6 +105,7 @@ foreach ($keyList as $key) {
 }
 			?>
 	</ul>
+    <?php echo $OUTPUT->heading(get_string('add_new_key', 'auth_swisseduid'), 3);?>
 	<div>
 		<input type="hidden" id="keyid" name="keyid" value=""/>
 

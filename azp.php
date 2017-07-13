@@ -43,10 +43,8 @@ $returnurl = "$CFG->wwwroot/$CFG->admin/auth_config.php?auth=$auth";
 // Save configuration changes.
 if ($frm = data_submitted() and confirm_sesskey()) {
 
-    $authplugin->validate_form($frm, $err);
-
     if (count($err) == 0) {
-
+		$authplugin->validate_form($frm, $err);
         // Save plugin config.
         if ($authplugin->process_config($frm)) {
 
@@ -58,9 +56,9 @@ if ($frm = data_submitted() and confirm_sesskey()) {
                     set_config($name, $value, $plugin);
                 }
             }
-            redirect($returnurl);
-            exit;
         }
+		redirect($returnurl);
+		exit;
     } else {
         foreach ($err as $key => $value) {
             $focus = "form.$key";

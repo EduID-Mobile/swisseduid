@@ -68,8 +68,8 @@ function verify_keys($data, $keys, $errMessage="") {
 
     $res = pick_keys($data, $keys);
     $retval = (count($res) == count($keys));
-	// this exception is always thrown by the OauthManager->storeKey the because $errMessage is passed and it is not empty string
-    if (strlen($errMessage)) {
+
+    if (!$retval && strlen($errMessage)) {
         throw new Exception($errMessage);
     }
     return $retval;

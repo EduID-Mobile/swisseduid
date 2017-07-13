@@ -253,7 +253,6 @@ class OAuthManager {
         $curl->setPathInfo("/.well-known/openid-configuration"); // <- try OIDC discovery
         $curl->get()
              ->then(function ($req) {
-
                 return json_decode($req->getBody(), true);
              })
              ->then(function ($data) use ($self, $azpData) {
@@ -289,21 +288,27 @@ class OAuthManager {
     public function storeKey($keyInfo) {
         global $DB;
         $keyInfo = (array) $keyInfo;
+		$stored_key_entry = false;
 
-        /* verify_keys($keyInfo, ["kid", "crypt_key"], "Missing Key Attribute"); */
+        verify_keys($keyInfo, ["kid", "crypt_key"], "Missing Key Attribute");
 
-        /* if (array_key_exists("keyid", $keyInfo) && !empty($keyInfo["keyid"])) { */
-        if (array_key_exists("kid", $keyInfo) && !empty($keyInfo["kid"])) {
-            $keyInfo["id"] = $keyInfo["kid"];
+		if (array_key_exists("keyid", $keyInfo) && !empty($keyInfo["keyid"])) {
+			$keyInfo["id"] = $keyInfo["keyid"];
+			// extract the key by using the id
+			$stored_key_entry = $DB->get_record("auth_oauth_keys", array('id' => $keyInfo["id"]));
+		} else if (array_key_exists("kid", $keyInfo) && !empty($keyInfo["kid"])) {
+			$stored_key_entry = $DB->get_record("auth_oauth_keys", array('kid' => $keyInfo["kid"]));
+			if($stored_key_entry != false) {
+				$keyInfo["id"] = $stored_key_entry->id;
+			}
+		}
+
+        if (array_key_exists("key", $keyInfo) && !empty($keyInfo["key"])) {
+            $keyInfo["crypt_key"] = $keyInfo["key"];
         }
-
-        /* if (array_key_exists("key", $keyInfo) && !empty($keyInfo["key"])) { */
-        /*     $keyInfo["crypt_key"] = $keyInfo["key"]; */
-        /* } */
 
         $keyInfo = pick_keys($keyInfo, ["crypt_key", "id", "kid", "jku", "token_id"]);
         $keyInfo["azp_id"] = $this->azp;
-        $stored_key_entry = $DB->get_record("auth_oauth_keys", array('id' => $keyInfo["id"]));
 
         /* if (array_key_exists("id", $keyInfo )) { */
         if ($stored_key_entry === false) {
