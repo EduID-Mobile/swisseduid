@@ -44,6 +44,16 @@ class OAuthManager {
         }
     }
 
+    public function findByKid($kid) {
+        global $DB;
+        if (!empty($url)) {
+            if ($rec = $DB->get_record("auth_oauth_keys", ["kid" => $kid])) {
+				$this->azp = $rec->id;
+				return $this->get();
+            }
+        }
+    }
+
     public function isNew() {
         return !($this->azp > 0);
     }

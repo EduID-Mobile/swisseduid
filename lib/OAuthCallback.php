@@ -122,7 +122,31 @@ class OAuthCallback {
     public function authorizeAssertion() {
         global $CFG;
 
+		$jwe_base64_tokens = explode('.', $_GET["assertion"]); // assertion should be base64.base64.base64.base64 string
+		if(count($jwe_base64_tokens) < 4) {
+			// four sections should be present.
+			// five sections according to this https://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-40#section-3.1
+            http_response_code(403);
+			return;
+		}
+
+		$jose_header = json_decode(base64_decode($jwe_base64_tokens[0]));
+		if(empty($jose_header)) {
+            http_response_code(403);
+			return;
+		}
+
+		$kid = $jose_header['kid'];
+
+		// set the Authorization provider or stop here
+        if (!($target = $this->manager->findByKid($kid))) {
+            http_response_code(403);
+            return;
+        }
+
         $param = array_merge($_GET, ["scope"=> "openid profile email"]);
+
+
         $res = $this->callTokenEndpoint($param);
 
         if (!$this->handleToken($res)) {
