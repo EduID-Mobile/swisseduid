@@ -122,24 +122,31 @@ class OAuthCallback {
     public function authorizeAssertion() {
         global $CFG;
 
-		$jwe_base64_tokens = explode('.', $_GET["assertion"]); // assertion should be base64.base64.base64.base64 string
-		if(count($jwe_base64_tokens) < 4) {
-			// four sections should be present.
-			// five sections according to this https://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-40#section-3.1
+		$jwe_base64_tokens = explode('.', $_GET["assertion"]); // assertion should be a five or three base64 strings concatenated with dots
+		$counter = count($jwe_base64_tokens);
+		// either five sections for the encrypted assertion or
+		// three sections for the signed assertion should be present
+		// if that is not the case output error
+		if(!($counter === 5 || $counter === 3)) {
             http_response_code(403);
 			return;
 		}
 
-		$jose_header = json_decode(base64_decode($jwe_base64_tokens[0]));
+		$jose_header = json_decode(base64_decode($jwe_base64_tokens[count($jwe_base64_tokens) === 5 ? 0 : 1]));
 		if(empty($jose_header)) {
             http_response_code(403);
 			return;
 		}
 
-		$kid = $jose_header['kid'];
+		$issuer = $jose_header['issuer'];
+		// the issuer is mandatory if not present output error
+		if(empty($jose_header)) {
+            http_response_code(403);
+			return;
+		}
 
 		// set the Authorization provider or stop here
-        if (!($target = $this->manager->findByKid($kid))) {
+        if (!($target = $this->manager->findByIssuer($kid))) {
             http_response_code(403);
             return;
         }

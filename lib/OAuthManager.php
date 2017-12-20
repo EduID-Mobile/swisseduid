@@ -54,6 +54,16 @@ class OAuthManager {
         }
     }
 
+    public function findByIssuer($issuer) {
+        global $DB;
+        if (!empty($url)) {
+            if ($rec = $DB->get_record("auth_oauth_keys", ["issuer" => $issuer])) {
+				$this->azp = $rec->id;
+				return $this->get();
+            }
+        }
+    }
+
     public function isNew() {
         return !($this->azp > 0);
     }
