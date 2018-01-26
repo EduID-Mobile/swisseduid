@@ -244,15 +244,17 @@ trait OAuthPlugin {
 	protected function getToken($field, $token) {
         global $DB;
 
-        $attrMap = [];
-        $attrMap[$field] = $token;
-        if($recToken = $DB->get_record("auth_oauth_tokens", $attrMap)) {
+        /* $attrMap = []; */
+        /* $attrMap[$field] = $token; */
+        /* if($recToken = $DB->get_record("auth_oauth_tokens", $attrMap)) { */
+        if($recToken = $DB->get_record("select * from {auth_oauth_tokens} where $field = ?", [$token])) {
             return (array)$recToken;
         }
 
-        $attrMap = [];
-        $attrMap["initial_$field"] = $token;
-        if($recToken = $DB->get_record("auth_oauth_tokens", $attrMap)) {
+        /* $attrMap = []; */
+        /* $attrMap["initial_$field"] = $token; */
+        /* if($recToken = $DB->get_record("auth_oauth_tokens", $attrMap)) { */
+        if($recToken = $DB->get_record("select * from {auth_oauth_tokens} where initial_$field = ?", [$token])) {
             return (array)$recToken;
         }
         throw new \RESTling\Exception\Forbidden();

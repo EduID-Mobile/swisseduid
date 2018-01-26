@@ -38,7 +38,8 @@ class OAuthManager {
     public function findByUrl($url) {
         global $DB;
         if (!empty($url)) {
-            if ($rec = $DB->get_record("auth_oauth_azp", ["url" => $url])) {
+            /* if ($rec = $DB->get_record("auth_oauth_azp", ["url" => $url])) { */
+            if ($rec = $DB->get_record_sql("select * from {auth_oauth_azp} where url = ?", [$url])) {
                 $this->azp = $rec->id;
             }
         }
@@ -46,8 +47,9 @@ class OAuthManager {
 
     public function findByKid($kid) {
         global $DB;
-        if (!empty($url)) {
-            if ($rec = $DB->get_record("auth_oauth_keys", ["kid" => $kid])) {
+        if (!empty($kid)) {
+            /* if ($rec = $DB->get_record("auth_oauth_keys", ["kid" => $kid])) { */
+            if ($rec = $DB->get_record_sql("select * from {auth_oauth_keys} where kid = ?", [$kid])) {
 				$this->azp = $rec->id;
 				return $this->get();
             }
@@ -56,8 +58,9 @@ class OAuthManager {
 
     public function findByIssuer($issuer) {
         global $DB;
-        if (!empty($url)) {
-            if ($rec = $DB->get_record("auth_oauth_keys", ["issuer" => $issuer])) {
+        if (!empty($issuer)) {
+            /* if ($rec = $DB->get_record("auth_oauth_azp", ["issuer" => $issuer])) { */
+            if ($rec = $DB->get_record_sql("select * from {auth_oauth_azp} where issuer = ?", [$issuer])) {
 				$this->azp = $rec->id;
 				return $this->get();
             }
@@ -71,16 +74,13 @@ class OAuthManager {
     public function getPrivateKey() {
         global $DB;
 
-        // $keyinfo = $DB->get_record("auth_oauth_keys", [
-        //     "kid" => "private",
-        //     "azp_id" => $this->azp,
-        //     "jku"    => null
-        // ]);
-        $keyinfo = $DB->get_record("auth_oauth_keys", [
-            "kid" => "private",
-            "azp_id" => null,
-            "jku"    => null
-        ]);
+        //$keyinfo = $DB->get_record("auth_oauth_keys", [
+        //    "kid" => "private",
+        //    "azp_id" => null,
+        //    "jku"    => null
+        //]);
+
+        $keyinfo = $DB->get_record_sql("select * from {auth_oauth_keys} where kid = ? and azp_id is null and jku is null", ["private"]);
 
         if (!$keyinfo) {
             throw new Exception("no private key found for azp");
@@ -373,7 +373,8 @@ class OAuthManager {
     public function getState($state) {
         global $DB;
 
-        $rec = $DB->get_record("auth_oauth_state", ["state" => $state]);
+        /* $rec = $DB->get_record("auth_oauth_state", ["state" => $state]); */
+        $rec = $DB->get_record_sql("select * from {auth_oauth_state} where state = ?", [$state]);
         $this->azp = $rec->azp_id;
         return $rec;
     }

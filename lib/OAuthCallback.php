@@ -138,21 +138,21 @@ class OAuthCallback {
 			return;
 		}
 
-		$issuer = $jose_header['issuer'];
 		// the issuer is mandatory if not present output error
 		if(empty($jose_header)) {
             http_response_code(403);
 			return;
 		}
 
+		$aud = $jose_header->aud;
+
 		// set the Authorization provider or stop here
-        if (!($target = $this->manager->findByIssuer($kid))) {
+        if (!($target = $this->manager->findByIssuer($aud))) {
             http_response_code(403);
             return;
         }
 
         $param = array_merge($_GET, ["scope"=> "openid profile email"]);
-
 
         $res = $this->callTokenEndpoint($param);
 
@@ -169,8 +169,8 @@ class OAuthCallback {
         $curl->setCredentials($target->client_id, $target->credentials);
         unset($param["client_id"]); // because the client id is in the header already
 
-        // $param["client_secret"] = $target->credentials;
-        $result = null;
+        $param["client_secret"] = $target->credentials;
+		$result = null;
 
         $curl->post($param, "application/x-www-form-urlencoded")
              ->then(function($req){ // start parser handler
@@ -438,7 +438,9 @@ class OAuthCallback {
 
         // create or update the user
         $username = $userClaims["sub"];
-        if ($user = $DB->get_record("user", ["username" => $username])) {
+
+        /* if ($user = $DB->get_record("user", ["username" => $username])) { */
+        if ($user = $DB->get_record_sql("select * from {user} where username = ?", [$username])) {
             // update a user
             $user = $this->handleAttributeMap($user, $userClaims);
             user_update_user($user, false, false);
