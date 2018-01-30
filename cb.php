@@ -58,13 +58,11 @@ if (array_key_exists("id", $_GET)) {
 } else if (array_key_exists("error", $_GET)) {
     http_response_code(403);
     exit;
-}
-elseif (array_key_exists("assertion", $_GET)) {
+} else if (array_key_exists("assertion", $_GET)) {
     // This one handles the assertion (an any future extension).
     // By passing ALL parameters to the AP token endpoint.
     $callback->authorizeAssertion();
-}
-else {
+} else {
     http_response_code(403); // bad request
     exit;
 }

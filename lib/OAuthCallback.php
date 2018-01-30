@@ -542,10 +542,8 @@ class OAuthCallback {
         // the service, whereas moodle considers tokens that are not used as
         // sessions as external.
         global $DB;
-        $service = $DB->get_record('external_services',
-                                    ['name'=>'OAuth2'],
-                                    '*',
-                                    IGNORE_MISSING);
+        /* $service = $DB->get_record('external_services', ['name'=>'OAuth2'], '*', IGNORE_MISSING); */
+        $service = $DB->get_record_sql("select * from {external_services} where name = 'OAuth2'");
 
         // one problem here is that the token will not work with the service
         // endpoints.
