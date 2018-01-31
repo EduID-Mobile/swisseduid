@@ -543,7 +543,7 @@ class OAuthCallback {
         // sessions as external.
         global $DB;
         /* $service = $DB->get_record('external_services', ['name'=>'OAuth2'], '*', IGNORE_MISSING); */
-        $service = $DB->get_record_sql("select * from {external_services} where name = 'OAuth2'");
+        $service = $DB->get_record_sql("select * from {external_services} where shortname = 'moodle_mobile_app'");
 
         // one problem here is that the token will not work with the service
         // endpoints.
