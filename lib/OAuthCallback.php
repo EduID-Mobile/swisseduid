@@ -1,5 +1,4 @@
 <?php
-
 require_once("$CFG->dirroot/tag/lib.php");
 require_once("$CFG->dirroot/user/editlib.php");
 require_once("$CFG->dirroot/user/profile/lib.php");
@@ -188,6 +187,10 @@ class OAuthCallback {
                 }
             }); // end success handler
 
+		if(empty($result)) {
+			$result = $curl->getBody();
+		}
+
         return $result;
     }
 
@@ -232,9 +235,15 @@ class OAuthCallback {
         }
         else {
             $target =  $this->manager->get();
+			if(!empty($target->azp_id)) {
+            	$token = array_merge($token,[ "azp_id" => $target->azp_id ]);
+			}
+
+			if(!empty($target->azp_id)) {
+            	$token = array_merge($token,[ "azp_id" => $target->azp_id ]);
+			}
             $token = array_merge($token,[
                 "created"       => $now,
-                "azp_id"        => $target->azp_id,
                 "userid"        => $user->id
             ]);
         }
@@ -256,12 +265,12 @@ class OAuthCallback {
         }
 
         // 2. we issue a moodle token for an app
-        $moodle_token = $this->grantInternalToken($user->id, $expires);
+        $moodle_token = $this->grantInternalToken($user->id, $exp);
 
         $cliToken = pick_keys($response, ["access_token", "refresh_token", "expires_in"]);
 
         $cliToken = array_merge($cliToken, ["token_type" => "Bearer", "api_key" => $moodle_token]);
-
+		header('Content-Type: application/json');
         echo json_encode($cliToken);
         return true;
     }
@@ -543,7 +552,7 @@ class OAuthCallback {
         // sessions as external.
         global $DB;
         /* $service = $DB->get_record('external_services', ['name'=>'OAuth2'], '*', IGNORE_MISSING); */
-        $service = $DB->get_record_sql("select * from {external_services} where shortname = 'moodle_mobile_app'");
+        $service = $DB->get_record_sql("select id from {external_services} where shortname = 'moodle_mobile_app'");
 
         // one problem here is that the token will not work with the service
         // endpoints.
@@ -560,13 +569,15 @@ class OAuthCallback {
         // assign all their endpoints to the OAuth2 service.
         // a saner way would be to allow OAuth2's token management to hook into
         // the external token handling and let OAuth2's scoping handle the job.
-        if ($service) {
-            return external_generate_token(EXTERNAL_TOKEN_PERMANENT,
+        if (empty($service)) {
+			return null;
+		} else {
+			$token = external_generate_token(EXTERNAL_TOKEN_PERMANENT,
                                            $service,
                                            $userid,
                                            context_system::instance(),
                                            $expires);
-        }
-        return null;
+            return $token;
+		}
     }
 }

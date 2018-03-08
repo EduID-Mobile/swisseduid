@@ -402,7 +402,9 @@ class OAuthManager {
         $funcname = "update_record";
         if (!array_key_exists("id", $token)) {
             $token["initial_access_token"]  = $token["access_token"];
-            $token["initial_refresh_token"] = $token["refresh_token"];
+			if(!empty($token["refresh_token"])) {
+            	$token["initial_refresh_token"] = $token["refresh_token"];
+			}
             $funcname = "insert_record";
         }
 

@@ -101,6 +101,7 @@ class Token extends ServiceFoundation {
                     $client = $claims["azp"]->getValue();
 
                     $this->mark();
+
                     $tm->addToken(["token_type"   => "urn:eduid:token:client",
                                    "client"       => $client,
                                    "authority_id" => $authority->authorityId(),
